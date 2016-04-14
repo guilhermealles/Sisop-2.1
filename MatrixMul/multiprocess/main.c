@@ -18,7 +18,7 @@ pthread_mutex_t shm_mutex;
 void multiplyMatrices();
 
 int main (int argc, char **argv) {
-    if (argc != 2) {
+    if (argc != 5) {
         fprintf(stderr, "Usage: %s <processcount>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
@@ -28,8 +28,8 @@ int main (int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    matrix1 = readMatrix("../inputs/big_in1.txt", &matrix1_rows, &matrix1_cols);
-    matrix2 = readMatrix("../inputs/big_in2.txt", &matrix2_rows, &matrix2_cols);
+    matrix1 = readMatrix(argv[2], &matrix1_rows, &matrix1_cols);
+    matrix2 = readMatrix(argv[3], &matrix2_rows, &matrix2_cols);
 
     if (matrix1_cols != matrix2_rows) {
         fprintf(stderr, "Error: these two matrices cannot be multiplied!\n");
@@ -84,7 +84,7 @@ int main (int argc, char **argv) {
         while((int)shared_done_count[0] != process_count) {
             // Busy waiting until all processes are done
         }
-        writeMatrix("out.txt", shared_matrix, matrix_out_rows, matrix_out_cols);
+        writeMatrix(argv[4], shared_matrix, matrix_out_rows, matrix_out_cols);
 
         // Detach and free shared memory
         shmdt(shared_matrix);

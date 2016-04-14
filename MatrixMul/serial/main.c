@@ -23,7 +23,7 @@ int main (int argc, char **argv) {
     matrix_out = (int*) malloc(sizeof(int) * (matrix_out_rows * matrix_out_cols));
 
     multiplyMatrices();
-    writeMatrix("out.txt", matrix_out, matrix_out_rows, matrix_out_cols);
+    writeMatrix(argv[3], matrix_out, matrix_out_rows, matrix_out_cols);
     return 0;
 }
 
