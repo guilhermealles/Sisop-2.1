@@ -22,14 +22,14 @@ int main (int argc, char **argv) {
         fprintf(stderr, "Usage: %s <processcount>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
-    process_count = strtol(argv[1], NULL, 10);
+    process_count = strtol(argv[3], NULL, 10);
     if (process_count == 0) {
         fprintf(stderr, "Error: process count cannot be zero.\n");
         exit(EXIT_FAILURE);
     }
 
-    matrix1 = readMatrix(argv[2], &matrix1_rows, &matrix1_cols);
-    matrix2 = readMatrix(argv[3], &matrix2_rows, &matrix2_cols);
+    matrix1 = readMatrix(argv[1], &matrix1_rows, &matrix1_cols);
+    matrix2 = readMatrix(argv[2], &matrix2_rows, &matrix2_cols);
 
     if (matrix1_cols != matrix2_rows) {
         fprintf(stderr, "Error: these two matrices cannot be multiplied!\n");

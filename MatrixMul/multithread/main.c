@@ -13,12 +13,12 @@ void* multiply(void* tid){
 	int i, j,k, result = 0;
 	int line = (int) tid;
 
-	for(k = line; k < matrix1->rows; k += num_threads){
-		for(i=0; i < matrix2->cols; i++){
-			for(j=0; j < matrix1->rows; j++){
-				result = result + (matrix1->matrix[k][j] * matrix2->matrix[j][i]);
+	for(k = line; k < matrix1Rows; k += num_threads){
+		for(i=0; i < matrix2Cols; i++){
+			for(j=0; j < matrix1Rows; j++){
+				result = result + (matrix1[(k*matrix1Rows) + j] * matrix2[(j*matrix2Rows) + i]);
 			}
-			multMatrix->matrix[k][i] = result;
+			multMatrix[(k*multMatrixRows) + i] = result;
 			result = 0;
 		}
 	}
@@ -27,7 +27,7 @@ void* multiply(void* tid){
 }
 
 int main (int argc, char **argv) {
-   if (argc == 4) {
+   if (argc == 5) {
 		pthread_t * thread;
 		int i=0;
 
@@ -38,7 +38,7 @@ int main (int argc, char **argv) {
 		num_threads = strtol(argv[3], NULL, 10);
 
 		if(num_threads <= 0){
-			fprintf(stderr, "Threads number must be higher than 0.\n")
+			fprintf(stderr, "Threads number must be higher than 0.\n");
 			exit(EXIT_FAILURE);
 		}
 
@@ -52,8 +52,8 @@ int main (int argc, char **argv) {
 			exit(EXIT_FAILURE);
 		}
 
-		if(num_threads > matrix1->rows){
-			num_threads = matrix1->rows;
+		if(num_threads > matrix1Rows){
+			num_threads = matrix1Rows;
 		}
 
 		thread = (pthread_t*) malloc(sizeof(pthread_t) * num_threads);
@@ -72,12 +72,13 @@ int main (int argc, char **argv) {
       		pthread_join(thread[i], NULL);
 		}
 
-		if(writeMatrix("out.txt", multMatrix) == 1){
-			printf("Arquivo de saída gerado com sucesso.\n");
+		if(writeMatrix(argv[4], multMatrix, multMatrixRows, multMatrixCols) != 1){
+			fprintf(stderr, "Error when creating output file.\n");
+			exit(EXIT_FAILURE);
 		}
 
 		// verificacao
-	//	printMatrix(matrix1->matrix, matrix1->rows, matrix1->cols);
+	//	printMatrix(matrix1->matrix, matrix1Rows, matrix1->cols);
 	//	printMatrix(matrix2->matrix, matrix2->rows, matrix2->cols);
 	//  printMatrix(multMatrix->matrix, matrix1->cols, matrix2->rows);
 

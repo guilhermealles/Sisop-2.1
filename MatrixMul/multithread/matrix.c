@@ -3,25 +3,28 @@
 
 int* readMatrix (const char *filename, int *rows, int *cols) {
     FILE *f;
-    int local_rows=0, local_cols=0, i;
+    int local_rows=0, local_cols=0;
 
     f = fopen(filename, "r");
     if (!f) {
-        errorExit("Fatal error: failed to open file.\n");
+        fprintf(stderr, "Fatal error: failed to open file.\n");
+        exit(EXIT_FAILURE);
     }
 
     if (matchIdentifier(f, "LINHAS =")) {
         fscanf(f, "%u\n", &local_rows);
     }
     else {
-        errorExit("Error: expected \"LINHAS =\".\n");
+        fprintf(stderr, "Error: expected \"LINHAS =\".\n");
+        exit(EXIT_FAILURE);
     }
 
     if (matchIdentifier(f, "COLUNAS =")) {
         fscanf(f, "%u\n", &local_cols);
     }
     else {
-        errorExit("Error: expected \"COLUNAS =\"");
+        fprintf(stderr, "Error: expected \"COLUNAS =\".\n");
+        exit(EXIT_FAILURE);
     }
 
     // Allocate matrix in memory
@@ -65,21 +68,8 @@ int matchIdentifier (FILE *f, const char *identifier) {
     return 1;
 }
 
-void printMatrix(int**matrix, int rows, int cols) {
-    printf("Rows: %d,\tCols: %d.\n", rows, cols);
-    int i, j;
-    for (i=0; i<rows; i++) {
-        for (j=0; j<cols; j++) {
-            printf("%d ", matrix[i][j]);
-        }
-        printf("\n");
-    }
-}
-
-int writeMatrix(const char *filename, matrix* saida) {
+int writeMatrix(const char *filename, int* saida, int rows, int cols) {
     FILE *f;
-	int rows = saida->rows;
-	int cols = saida->cols;
 
     f = fopen(filename, "w");
     if (!f) {
@@ -91,7 +81,7 @@ int writeMatrix(const char *filename, matrix* saida) {
     int i, j;
     for (i=0; i<rows; i++) {
         for (j=0; j<cols; j++) {
-            fprintf(f, "%d ", (saida->matrix[i][j]));
+            fprintf(f, "%d ", (saida[(i*rows) + j]));
         }
         fprintf(f, "\n");
     }
@@ -99,9 +89,4 @@ int writeMatrix(const char *filename, matrix* saida) {
     fclose(f);
 
     return 1;
-}
-
-void errorExit (const char *error_msg) {
-    fprintf(stderr, error_msg);
-    exit (EXIT_FAILURE);
 }

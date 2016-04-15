@@ -4,11 +4,9 @@
 #include <stdio.h>
 
 
-matrix* readMatrix(const char *filenameint *rows, int *cols);
+int* readMatrix(const char *filename, int *rows, int *cols);
 int matchIdentifier (FILE *f, const char *identifier);
-void printMatrix(int **matrix, int rows, int cols);
-void errorExit (const char *error_msg);
-int writeMatrix(const char *filename, matrix *saida);
+int writeMatrix(const char *filename, int *saida, int rows, int cols);
 
 
 #endif
