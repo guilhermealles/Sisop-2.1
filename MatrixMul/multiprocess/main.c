@@ -13,7 +13,6 @@ int matrix_out_rows, matrix_out_cols;
 int process_count = 0;
 int process_rank = 0;
 pid_t pid = -1;
-pthread_mutex_t shm_mutex;
 
 void multiplyMatrices();
 
@@ -42,15 +41,8 @@ int main (int argc, char **argv) {
     // Create shared memory segment
     long int size = (matrix_out_rows * matrix_out_cols) * 4;
     int shmatrix_id = shmget(IPC_PRIVATE, size, S_IRUSR | S_IWUSR);
-    int sh_done_count_id = shmget(IPC_PRIVATE, 1, S_IRUSR | S_IWUSR);
 
-    // Initialize Mutex
-    pthread_mutexattr_t attributes;
-    pthread_mutexattr_init(&attributes);
-    pthread_mutexattr_setpshared(&attributes, PTHREAD_PROCESS_SHARED);
-    pthread_mutex_init(&shm_mutex, &attributes);
-    pthread_mutexattr_destroy(&attributes);
-
+    pid_t *children_pid = malloc(sizeof(pid_t) * process_count);
     int i;
     // Create child processes
     for (i=0; i<process_count-1; i++) {
@@ -58,7 +50,9 @@ int main (int argc, char **argv) {
         if (pid != 0) {
             process_rank++;
             pid = fork();
-            if (pid == -1) {
+            // Populates an array of ints with the pid of all children
+            if (pid != 0) children_pid[i] = pid;
+            else if (pid == -1) {
                 fprintf(stderr, "Error while creating child processes.\n");
                 exit(EXIT_FAILURE);
             }
@@ -71,38 +65,32 @@ int main (int argc, char **argv) {
 
     // Attach pointer to shared memory segment
     int* shared_matrix = (int*) shmat(shmatrix_id, NULL, 0);
-    char* shared_done_count = (char*) shmat(sh_done_count_id, NULL, 0);
-
     multiplyMatrices(shared_matrix);
-    //MUTEX
-    pthread_mutex_lock(&shm_mutex);
-    shared_done_count[0]++;
-    pthread_mutex_unlock(&shm_mutex);
-    //END MUTEX
 
     if (process_rank == 0) {
-        while((int)shared_done_count[0] != process_count) {
-            // Busy waiting until all processes are done
+        // Wait for all children to finish
+        int return_status;
+        for (i=0; i<process_count-1; i++) {
+            waitpid(children_pid[i], &return_status, 0);
+            if (return_status != 0) {
+                fprintf(stderr, "Error: process with PID %d exited with status %d.\n", children_pid[i], return_status);
+                exit(EXIT_FAILURE);
+            }
         }
+
         writeMatrix(argv[4], shared_matrix, matrix_out_rows, matrix_out_cols);
 
         // Detach and free shared memory
         shmdt(shared_matrix);
-        shmdt(shared_done_count);
         shmctl(shmatrix_id, IPC_RMID, NULL);
-        shmctl(sh_done_count_id, IPC_RMID, NULL);
 
-        // Destroy mutex structure
-        pthread_mutex_destroy(&shm_mutex);
-
-        //TODO Free 2 input matrices
+        free(matrix1);
+        free(matrix2);
+        free(children_pid);
     }
     else {
         // Detach shared memory
         shmdt(shared_matrix);
-        shmdt(shared_done_count);
-
-        // Destroy mutex as well?
     }
     return 0;
 }
