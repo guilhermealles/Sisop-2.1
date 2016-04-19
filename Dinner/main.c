@@ -15,11 +15,25 @@ int *state;
 int num_philosof;
 int *left, *right;
 
+void printStates(){
+	int i=0;	
+	for(i=0; i<num_philosof; i++){
+		if(state[i] == 0)
+			printf("T - ");
+		if(state[i] == 1)
+			printf("H - ");
+		if(state[i] == 2)
+			printf("E - ");
+	}	
+	printf("\n");
+
+}
+
 void tryGetForks(int i){
-	printf("Filosofo %d trying to get forks.\n", i);
+	//printf("Filosofo %d trying to get forks.\n", i);
 	if(state[i] == HUNGRY && state[left[i]] != EATING && state[right[i]] != EATING){
 		state[i] = EATING;
-		printf("GOT IT!! \n");
+		printStates();
 		sem_post(&sem_p[i]);
 	}
 }
@@ -33,16 +47,17 @@ void put_forks(int i){
 }
 
 void take_forks(int i){
-	printf("Take forks %d \n", i);
+	//printf("Take forks %d \n", i);
 	sem_wait(mutex);      // begin critical region
 	state[i] = HUNGRY;    // change philos. state to hungry to make possible to get forks
+	printStates();
 	tryGetForks(i);       // try to get forks
 	sem_post(mutex);      // end of critical region
 	sem_wait(&sem_p[i]);  // block if forks weren't caught
 }
 
 void eat(int p){
-	printf("Philosopher %d eating \n", p);
+//	printf("Philosopher %d eating \n", p);
 	int time = 0;
 	while(time == 0)
 		time = rand() % 10;
@@ -50,7 +65,7 @@ void eat(int p){
 }
 
 void think(int p){
-	printf("Philosopher %d thinking \n", p);
+	//printf("Philosopher %d thinking \n", p);
 	int time = 0;
 	while(time == 0)
 		time = rand() % 10;
@@ -62,6 +77,7 @@ void initializeStates(){
 	for(i=0; i<num_philosof; i++){
 		state[i] = THINKING;
 	}
+	printStates();
 
 }
 void* philosopher(void* i){
