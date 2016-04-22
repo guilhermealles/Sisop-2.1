@@ -9,8 +9,8 @@ int matrix_out_rows, matrix_out_cols, *matrix_out;
 void multiplyMatrices();
 
 int main (int argc, char **argv) {
-    matrix1 = readMatrix(argv[1], &matrix1_rows, &matrix1_cols);
-    matrix2 = readMatrix(argv[2], &matrix2_rows, &matrix2_cols);
+    matrix1 = readMatrix("in1.txt", &matrix1_rows, &matrix1_cols);
+    matrix2 = readMatrix("in2.txt", &matrix2_rows, &matrix2_cols);
 
     if (matrix1_cols != matrix2_rows) {
         fprintf(stderr, "Error: these two matrices cannot be multiplied!\n");
@@ -23,7 +23,7 @@ int main (int argc, char **argv) {
     matrix_out = (int*) malloc(sizeof(int) * (matrix_out_rows * matrix_out_cols));
 
     multiplyMatrices();
-    writeMatrix(argv[3], matrix_out, matrix_out_rows, matrix_out_cols);
+    writeMatrix("out.txt", matrix_out, matrix_out_rows, matrix_out_cols);
     return 0;
 }
 

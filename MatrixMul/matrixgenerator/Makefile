@@ -8,5 +8,6 @@ all: ${OBJECTS} ${INCLUDES}
 	${CC} -o matrixgen ${OBJECTS}
 
 clean:
+	rm -f matrixgen
 	rm -f *~
 	rm -f ${OBJECTS}

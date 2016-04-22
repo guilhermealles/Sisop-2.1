@@ -8,5 +8,6 @@ all: ${OBJECTS} ${INCLUDES}
 	${CC} -o matrixmul ${OBJECTS} -lpthread
 
 clean:
+	rm -f matrixmul
 	rm -f *~
 	rm -f ${OBJECTS}

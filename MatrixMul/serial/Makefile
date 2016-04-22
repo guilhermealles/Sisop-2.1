@@ -8,5 +8,6 @@ all: ${OBJECTS} ${INCLUDES}
 	${CC} -o matrixmul ${OBJECTS}
 
 clean:
+	rm -f matrixmul
 	rm -f *~
 	rm -f ${OBJECTS}

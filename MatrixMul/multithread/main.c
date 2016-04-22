@@ -27,15 +27,15 @@ void* multiply(void* tid){
 }
 
 int main (int argc, char **argv) {
-   if (argc == 5) {
+   if (argc == 2) {
 		pthread_t * thread;
 		int i=0;
 
         // read and allocate matrix
-        matrix1 = readMatrix(argv[1], &matrix1Rows, &matrix1Cols);
-		matrix2 = readMatrix(argv[2], &matrix2Rows, &matrix2Cols);
+        matrix1 = readMatrix("in1.txt", &matrix1Rows, &matrix1Cols);
+		matrix2 = readMatrix("in2.txt", &matrix2Rows, &matrix2Cols);
 
-		num_threads = strtol(argv[3], NULL, 10);
+		num_threads = strtol(argv[1], NULL, 10);
 
 		if(num_threads <= 0){
 			fprintf(stderr, "Threads number must be higher than 0.\n");
@@ -72,15 +72,10 @@ int main (int argc, char **argv) {
       		pthread_join(thread[i], NULL);
 		}
 
-		if(writeMatrix(argv[4], multMatrix, multMatrixRows, multMatrixCols) != 1){
+		if(writeMatrix("out.txt", multMatrix, multMatrixRows, multMatrixCols) != 1){
 			fprintf(stderr, "Error when creating output file.\n");
 			exit(EXIT_FAILURE);
 		}
-
-		// verificacao
-	//	printMatrix(matrix1->matrix, matrix1Rows, matrix1->cols);
-	//	printMatrix(matrix2->matrix, matrix2->rows, matrix2->cols);
-	//  printMatrix(multMatrix->matrix, matrix1->cols, matrix2->rows);
 
 
 		free(matrix1);
@@ -88,6 +83,9 @@ int main (int argc, char **argv) {
 		free(multMatrix);
 
     }
+	else {
+		printf("Usage: %s <threads count>\n", argv[0]);
+	}
 
     return 0;
 }

@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <pthread.h>
 #include <sys/shm.h>
 #include <sys/stat.h>
 #include "matrix.h"
@@ -17,18 +16,18 @@ pid_t pid = -1;
 void multiplyMatrices();
 
 int main (int argc, char **argv) {
-    if (argc != 5) {
+    if (argc != 2) {
         fprintf(stderr, "Usage: %s <processcount>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
-    process_count = strtol(argv[3], NULL, 10);
-    if (process_count == 0) {
-        fprintf(stderr, "Error: process count cannot be zero.\n");
+    process_count = strtol(argv[1], NULL, 10);
+    if (process_count <= 0) {
+        fprintf(stderr, "Error: process count must be greater than zero.\n");
         exit(EXIT_FAILURE);
     }
 
-    matrix1 = readMatrix(argv[1], &matrix1_rows, &matrix1_cols);
-    matrix2 = readMatrix(argv[2], &matrix2_rows, &matrix2_cols);
+    matrix1 = readMatrix("in1.txt", &matrix1_rows, &matrix1_cols);
+    matrix2 = readMatrix("in2.txt", &matrix2_rows, &matrix2_cols);
 
     if (matrix1_cols != matrix2_rows) {
         fprintf(stderr, "Error: these two matrices cannot be multiplied!\n");
@@ -78,7 +77,7 @@ int main (int argc, char **argv) {
             }
         }
 
-        writeMatrix(argv[4], shared_matrix, matrix_out_rows, matrix_out_cols);
+        writeMatrix("out.txt", shared_matrix, matrix_out_rows, matrix_out_cols);
 
         // Detach and free shared memory
         shmdt(shared_matrix);
