@@ -10,13 +10,13 @@
 
 pthread_t * thread;
 sem_t *mutex;
-sem_t *sem_p;   
+sem_t *sem_p;
 int *state;
 int num_philosof;
 int *left, *right;
 
 void printStates(){
-	int i=0;		
+	int i=0;
 	for(i=0; i<num_philosof; i++){
 		if(state[i] == 0)
 			printf("T - ");
@@ -27,7 +27,7 @@ void printStates(){
 
 		if (i == (num_philosof - 1) )
 			printf ("\n");
-	}	
+	}
 
 }
 
@@ -41,17 +41,17 @@ void tryGetForks(int i){
 }
 
 void put_forks(int i){
-	sem_wait(mutex);       
-	state[i] = THINKING;   
-	tryGetForks(left[i]);  // check if neigh. can eat  
+	sem_wait(mutex);
+	state[i] = THINKING;
+	tryGetForks(left[i]);  // check if neigh. can eat
 	tryGetForks(right[i]);
 	sem_post(mutex);       // end of critical region
 }
 
 void take_forks(int i){
 	//printf("Take forks %d \n", i);
-	sem_wait(mutex);      
-	state[i] = HUNGRY;    
+	sem_wait(mutex);
+	state[i] = HUNGRY;
 	printStates();
 	tryGetForks(i);       // try to get forks
 	sem_post(mutex);      // end of critical region
@@ -89,48 +89,48 @@ void* philosopher(void* i){
 		put_forks(p);
 
 	}
-	return;
+	return 0;
 }
 
 int main (int argc, char **argv) {
 
-	int i;	
+	int i;
 
 	if (argc != 2) {
 		fprintf(stderr, "Usage: %s <number of philosophers>\n", argv[0]);
-		exit(EXIT_FAILURE);	
+		exit(EXIT_FAILURE);
 	}
 
 	num_philosof = strtol(argv[1], NULL, 10);
 	if(num_philosof <= 0){
 		fprintf(stderr, "Number of philosophers must be up to 0.\n");
-		exit(EXIT_FAILURE);	
+		exit(EXIT_FAILURE);
 	}
 
 	// define neighborhood
 	left = malloc(sizeof(int) * num_philosof);
 	right = malloc(sizeof(int) * num_philosof);
 	for(i=0; i<num_philosof; i++){
-		
+
 		right[i] = (i+num_philosof-1) % num_philosof;
 		left[i] = (i+1) % num_philosof;
 
 		printf("%d - direita %d - esquerda %d \n", i, left[i], right[i]);
 	}
 
-	// allocate mutex 
+	// allocate mutex
 	mutex = malloc (sizeof(sem_t));
 	sem_init(mutex, 0, (num_philosof-1));
-	
+
 	// allocate semaphore for each philosopher
 	sem_p = malloc(sizeof(sem_t) * num_philosof);
 	for(i=0; i<num_philosof; i++){
 		sem_init(&sem_p[i], 0, 1);
 	}
- 
+
 	// allocate thread for each philosopher
 	thread = malloc(sizeof(pthread_t) * num_philosof);
-	
+
 	// allocate states - all starts hungry
  	state = malloc(sizeof(int) * num_philosof);
 	initializeStates();
@@ -138,11 +138,11 @@ int main (int argc, char **argv) {
 	for(i=0; i < num_philosof; i++){
 		if(pthread_create(&thread[i], NULL, philosopher, (void *) i) != 0){
 			printf("Error creating threads \n");
-		}	
+		}
 	}
 
 	for(i=0; i < num_philosof; i++){
-     	pthread_join(thread[i], NULL); 
+     	pthread_join(thread[i], NULL);
 	}
 
 
