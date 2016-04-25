@@ -1,150 +1,40 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
-#include <semaphore.h>
-#include <unistd.h>
+#include "philosopher.h"
 
-#define THINKING 0
-#define HUNGRY 1
-#define EATING 2
-
-pthread_t * thread;
-sem_t *mutex;
-sem_t *sem_p;
-int *state;
-int num_philosophers;
-int *left, *right;
-
-void printStates(){
-	int i=0;
-	for(i=0; i<num_philosophers; i++){
-		if(state[i] == 0)
-			printf("T - ");
-		if(state[i] == 1)
-			printf("H - ");
-		if(state[i] == 2)
-			printf("E - ");
-
-		if (i == (num_philosophers - 1) )
-			printf ("\n");
-	}
-
-}
-
-void tryGetForks(int i){
-	//printf("Filosofo %d trying to get forks.\n", i);
-	if(state[i] == HUNGRY && state[left[i]] != EATING && state[right[i]] != EATING){
-		state[i] = EATING;
-		printStates();
-		sem_post(&sem_p[i]);
-	}
-}
-
-void put_forks(int i){
-	sem_wait(mutex);
-	state[i] = THINKING;
-	tryGetForks(left[i]);  // check if neigh. can eat
-	tryGetForks(right[i]);
-	sem_post(mutex);       // end of critical region
-}
-
-void take_forks(int i){
-	//printf("Take forks %d \n", i);
-	sem_wait(mutex);
-	state[i] = HUNGRY;
-	printStates();
-	tryGetForks(i);       // try to get forks
-	sem_post(mutex);      // end of critical region
-	sem_wait(&sem_p[i]);  // block if forks weren't caught
-}
-
-void eat(int p){
-//	printf("Philosopher %d eating \n", p);
-	int time = 0;
-	time = rand() % 10 + 1;
-	sleep(time);
-}
-
-void think(int p){
-	//printf("Philosopher %d thinking \n", p);
-	int time = 0;
-	time = rand() % 10 + 1;
-	sleep(time);
-}
-
-void initializeStates(){
-	int i;
-	for(i=0; i<num_philosophers; i++){
-		state[i] = THINKING;
-	}
-	printStates();
-
-}
-void* philosopher(void* i){
-	int p = (int) i;
-	while(1){
-		think(p);
-	    take_forks(p);
-	 	eat(p);
-		put_forks(p);
-
-	}
-	return 0;
-}
+pthread_t *philosophers;
 
 int main (int argc, char **argv) {
-
-	int i;
-
 	if (argc != 2) {
 		fprintf(stderr, "Usage: %s <number of philosophers>\n", argv[0]);
 		exit(EXIT_FAILURE);
 	}
-
-	num_philosophers = strtol(argv[1], NULL, 10);
-	if(num_philosophers <= 0){
-		fprintf(stderr, "Number of philosophers must be up to 0.\n");
-		exit(EXIT_FAILURE);
-	}
-
-	// define neighborhood
-	left = malloc(sizeof(int) * num_philosophers);
-	right = malloc(sizeof(int) * num_philosophers);
-	for(i=0; i<num_philosophers; i++){
-
-		right[i] = (i+num_philosophers-1) % num_philosophers;
-		left[i] = (i+1) % num_philosophers;
-
-		printf("%d - direita %d - esquerda %d \n", i, left[i], right[i]);
-	}
-
-	// allocate mutex
-	mutex = malloc (sizeof(sem_t));
-	sem_init(mutex, 0, (num_philosophers-1));
-
-	// allocate semaphore for each philosopher
-	sem_p = malloc(sizeof(sem_t) * num_philosophers);
-	for(i=0; i<num_philosophers; i++){
-		sem_init(&sem_p[i], 0, 1);
-	}
-
+	int num_phil = strtol(argv[1], NULL, 10);
+	
+	initMonitor(num_phil);
+	
 	// allocate thread for each philosopher
-	thread = malloc(sizeof(pthread_t) * num_philosophers);
-
-	// allocate states - all starts hungry
- 	state = malloc(sizeof(int) * num_philosophers);
-	initializeStates();
-
-	for(i=0; i < num_philosophers; i++){
-		if(pthread_create(&thread[i], NULL, philosopher, (void *) i) != 0){
-			printf("Error creating threads \n");
+	philosophers = malloc(sizeof(pthread_t) * num_phil);
+	
+	int i;
+	for(i=0; i < num_phil; i++) {
+		if(pthread_create(&philosophers[i], NULL, philosopher, (void *) i) != 0) {
+			fprintf(stderr, "Error creating threads.\n");
+			exit(EXIT_FAILURE);
 		}
 	}
-
-	for(i=0; i < num_philosophers; i++){
-     	pthread_join(thread[i], NULL);
+	
+	while (1) {
+		sleep(1);
+		printStates();
 	}
 
+	for(i=0; i < num_phil; i++){
+     	pthread_join(philosophers[i], NULL);
+	}
+	
+	//TODO Clean up allocated memory
 
     return 0;
 }
