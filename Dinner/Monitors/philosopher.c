@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <unistd.h>
 #include "philosopher.h"
 
 pthread_cond_t *condition_variables;
@@ -14,7 +15,7 @@ int *left, *right;
 void initMonitor(int num_phil) {
 	int i;
 	num_philosophers = num_phil;
-	
+
 	// define neighborhood
 	left = malloc(sizeof(int) * num_philosophers);
 	right = malloc(sizeof(int) * num_philosophers);
@@ -22,13 +23,13 @@ void initMonitor(int num_phil) {
 		right[i] = (i+num_philosophers-1) % num_philosophers;
 		left[i] = (i+1) % num_philosophers;
 	}
-	
+
 	// Allocate and initialize condition variables
 	condition_variables = malloc(sizeof(pthread_cond_t) * num_philosophers);
 	for (i=0; i<num_philosophers; i++) {
 		pthread_cond_init(&condition_variables[i], NULL);
 	}
-	
+
 	// Initialize mutex
 	pthread_mutex_init(&mutex, NULL);
 
@@ -42,6 +43,7 @@ void initializeStates() {
 	for(i=0; i<num_philosophers; i++){
 		states[i] = THINKING;
 	}
+	printStates();
 }
 
 void printStates(){
@@ -63,29 +65,31 @@ void printStates(){
 void tryGetForks(int i){
 	if(states[i] == HUNGRY && states[left[i]] != EATING && states[right[i]] != EATING){
 		states[i] = EATING;
+		printStates();
 		pthread_cond_signal(&condition_variables[i]);
 	}
 }
 
 void putForks(int i){
 	pthread_mutex_lock(&mutex);
-	
+
 	states[i] = THINKING;
 	tryGetForks(left[i]);
 	tryGetForks(right[i]);
-	
+
 	pthread_mutex_unlock(&mutex);
 }
 
 void takeForks(int i){
 	pthread_mutex_lock(&mutex);
-	
+
 	states[i] = HUNGRY;
+	printStates();
 	tryGetForks(i);       // try to get forks
 	while (states[i] == HUNGRY) {
 		pthread_cond_wait(&condition_variables[i], &mutex);
 	}
-	
+
 	pthread_mutex_unlock(&mutex);
 }
 
