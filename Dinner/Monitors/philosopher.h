@@ -11,8 +11,8 @@ void printStates();
 void tryGetForks(int i);
 void putForks(int i);
 void takeFoks(int i);
-void eat();
-void think();
+void eat(int p);
+void think(int p);
 void* philosopher(void* i);
 
 #endif

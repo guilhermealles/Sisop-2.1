@@ -19,18 +19,11 @@ int main (int argc, char **argv) {
 
 	int i;
 	for(i=0; i < num_phil; i++) {
-		if(pthread_create(&philosophers[i], NULL, philosopher, (void *) &i) != 0) {
+		if(pthread_create(&philosophers[i], NULL, philosopher, (void *)i) != 0) {
 			fprintf(stderr, "Error creating threads.\n");
 			exit(EXIT_FAILURE);
 		}
 	}
-
-	/*
-	while (1) {
-		sleep(1);
-		printStates();
-	}
-	*/
 
 	for(i=0; i < num_phil; i++){
      	pthread_join(philosophers[i], NULL);

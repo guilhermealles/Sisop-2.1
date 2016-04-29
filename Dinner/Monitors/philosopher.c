@@ -48,24 +48,36 @@ void initializeStates() {
 
 void printStates(){
 	int i=0;
-	for(i=0; i<num_philosophers; i++){
+	for(i=0; i<num_philosophers-1; i++){
 		if(states[i] == 0)
 			printf("T - ");
 		if(states[i] == 1)
 			printf("H - ");
 		if(states[i] == 2)
 			printf("E - ");
-
-		if (i == (num_philosophers - 1) )
-			printf ("\n");
 	}
+	if(states[i] == 0)
+		printf("T\n");
+	if(states[i] == 1)
+		printf("H\n");
+	if(states[i] == 2)
+		printf("E\n");
 
+}
+
+int isValidState() {
+	int i=0;
+	for(i=0; i<num_philosophers; i++) {
+		if ((states[i] == 2 && states[left[i]] == 2) || (states[i] == 2 && states[right[i]] == 2)) {
+			return 0;
+		}
+	}
+	return 1;
 }
 
 void tryGetForks(int i){
 	if(states[i] == HUNGRY && states[left[i]] != EATING && states[right[i]] != EATING){
 		states[i] = EATING;
-		printStates();
 		pthread_cond_signal(&condition_variables[i]);
 	}
 }
@@ -84,7 +96,9 @@ void takeForks(int i){
 	pthread_mutex_lock(&mutex);
 
 	states[i] = HUNGRY;
+	// Print the states whenever someone gets HUNGRY
 	printStates();
+	
 	tryGetForks(i);       // try to get forks
 	while (states[i] == HUNGRY) {
 		pthread_cond_wait(&condition_variables[i], &mutex);
@@ -93,26 +107,26 @@ void takeForks(int i){
 	pthread_mutex_unlock(&mutex);
 }
 
-void eat(){
+void eat(int p){
 	int time = 0;
 	time = rand() % 10 + 1;
 	sleep(time);
 }
 
-void think(){
+void think(int p){
 	int time = 0;
 	time = rand() % 10 + 1;
 	sleep(time);
 }
 
 void* philosopher(void* i){
-	int p = *((int*)i);
+	int p = (int*)i;
 	while(1){
-		think();
+		think(p);
 	    takeForks(p);
-	 	eat();
+	 	eat(p);
 		putForks(p);
-
 	}
+
 	return 0;
 }
