@@ -6,8 +6,9 @@
 #define EATING 2
 
 void initMonitor(int num_phil);
-void tryGetForks(int i);
 void putForks(int i);
 void takeForks(int i);
+int tryGetForks(int i);
+void printStates();
 
 #endif
