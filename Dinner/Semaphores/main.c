@@ -55,8 +55,8 @@ void take_forks(int i){
 	sem_wait(mutex);
 	state[i] = HUNGRY;
 	printStates();
-	tryGetForks(i);       // try to get forks
-	sem_post(mutex);      // end of critical region
+	tryGetForks(i);       
+	sem_post(mutex);     
 	sem_wait(&sem_p[i]);  // block if forks weren't caught
 }
 
