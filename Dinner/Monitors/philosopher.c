@@ -1,49 +1,30 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <pthread.h>
 #include <unistd.h>
 #include "philosopher.h"
-
-pthread_cond_t *condition_variables;
-pthread_mutex_t mutex;
+#include "monitor.h"
 
 int *states;
-int num_philosophers;
 // left and right arrays are the indices of the neighbours of the philosopher i
 int *left, *right;
+int num_philosophers;
 
-void initMonitor(int num_phil) {
+void initializeStates(int num_phil) {
+    num_philosophers = num_phil;
+    states = malloc(sizeof(int) * num_philosophers);
+
 	int i;
-	num_philosophers = num_phil;
+	for(i=0; i<num_philosophers; i++){
+		states[i] = THINKING;
+	}
 
-	// define neighborhood
+    // define neighborhood
 	left = malloc(sizeof(int) * num_philosophers);
 	right = malloc(sizeof(int) * num_philosophers);
 	for(i=0; i<num_philosophers; i++){
 		right[i] = (i+num_philosophers-1) % num_philosophers;
 		left[i] = (i+1) % num_philosophers;
 	}
-
-	// Allocate and initialize condition variables
-	condition_variables = malloc(sizeof(pthread_cond_t) * num_philosophers);
-	for (i=0; i<num_philosophers; i++) {
-		pthread_cond_init(&condition_variables[i], NULL);
-	}
-
-	// Initialize mutex
-	pthread_mutex_init(&mutex, NULL);
-
-	// allocate states and initialize states
- 	states = malloc(sizeof(int) * num_philosophers);
-	initializeStates();
-}
-
-void initializeStates() {
-	int i;
-	for(i=0; i<num_philosophers; i++){
-		states[i] = THINKING;
-	}
-	printStates();
 }
 
 void printStates(){
@@ -65,68 +46,28 @@ void printStates(){
 
 }
 
-int isValidState() {
-	int i=0;
-	for(i=0; i<num_philosophers; i++) {
-		if ((states[i] == 2 && states[left[i]] == 2) || (states[i] == 2 && states[right[i]] == 2)) {
-			return 0;
-		}
-	}
-	return 1;
-}
-
-void tryGetForks(int i){
-	if(states[i] == HUNGRY && states[left[i]] != EATING && states[right[i]] != EATING){
-		states[i] = EATING;
-		pthread_cond_signal(&condition_variables[i]);
-	}
-}
-
-void putForks(int i){
-	pthread_mutex_lock(&mutex);
-
-	states[i] = THINKING;
-	tryGetForks(left[i]);
-	tryGetForks(right[i]);
-
-	pthread_mutex_unlock(&mutex);
-}
-
-void takeForks(int i){
-	pthread_mutex_lock(&mutex);
-
-	states[i] = HUNGRY;
-	// Print the states whenever someone gets HUNGRY
-	printStates();
-	
-	tryGetForks(i);       // try to get forks
-	while (states[i] == HUNGRY) {
-		pthread_cond_wait(&condition_variables[i], &mutex);
-	}
-
-	pthread_mutex_unlock(&mutex);
-}
-
-void eat(int p){
+void eat(){
 	int time = 0;
 	time = rand() % 10 + 1;
 	sleep(time);
 }
 
-void think(int p){
+void think(){
 	int time = 0;
 	time = rand() % 10 + 1;
 	sleep(time);
 }
 
 void* philosopher(void* i){
-	int p = (int*)i;
+	int p = *((int*)i);
+    // Free memory area that was allocated for the params
+    free(i);
+
 	while(1){
-		think(p);
+		think();
 	    takeForks(p);
-	 	eat(p);
+	 	eat();
 		putForks(p);
 	}
-
 	return 0;
 }
