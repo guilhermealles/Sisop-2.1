@@ -18,18 +18,18 @@ int *left, *right;
 void printStates(){
 	int i=0;
 	for(i=0; i<num_philosof-1; i++){
-		if(states[i] == 0)
+		if(state[i] == 0)
 			printf("T - ");
-		if(states[i] == 1)
+		if(state[i] == 1)
 			printf("H - ");
-		if(states[i] == 2)
+		if(state[i] == 2)
 			printf("E - ");
 	}
-	if(states[i] == 0)
+	if(state[i] == 0)
 		printf("T\n");
-	if(states[i] == 1)
+	if(state[i] == 1)
 		printf("H\n");
-	if(states[i] == 2)
+	if(state[i] == 2)
 		printf("E\n");
 
 }
@@ -118,12 +118,18 @@ int main (int argc, char **argv) {
 
 	// allocate mutex
 	mutex = malloc (sizeof(sem_t));
-	sem_init(mutex, 0, (num_philosof-1));
+	if (sem_init(mutex, 0, 1) == -1) {
+		fprintf(stderr, "Error initializing semaphore.\n");
+		exit(EXIT_FAILURE);
+	}
 
 	// allocate semaphore for each philosopher
 	sem_p = malloc(sizeof(sem_t) * num_philosof);
 	for(i=0; i<num_philosof; i++){
-		sem_init(&sem_p[i], 0, 1);
+		if (sem_init(&sem_p[i], 0, 1) == -1) {
+			fprintf(stderr, "Error initializing semaphore.\n");
+			exit(EXIT_FAILURE);
+		}
 	}
 
 	// allocate thread for each philosopher
