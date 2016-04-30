@@ -22,39 +22,22 @@ void initializeStates(int num_phil) {
 	left = malloc(sizeof(int) * num_philosophers);
 	right = malloc(sizeof(int) * num_philosophers);
 	for(i=0; i<num_philosophers; i++){
-		right[i] = (i+num_philosophers-1) % num_philosophers;
-		left[i] = (i+1) % num_philosophers;
+		right[i] = (i+1) % num_philosophers;
+		left[i] = (i+num_philosophers-1) % num_philosophers;
 	}
 }
 
-void printStates(){
-	int i=0;
-	for(i=0; i<num_philosophers-1; i++){
-		if(states[i] == 0)
-			printf("T - ");
-		if(states[i] == 1)
-			printf("H - ");
-		if(states[i] == 2)
-			printf("E - ");
-	}
-	if(states[i] == 0)
-		printf("T\n");
-	if(states[i] == 1)
-		printf("H\n");
-	if(states[i] == 2)
-		printf("E\n");
-
-}
-
-void eat(){
+void eat(int p){
 	int time = 0;
 	time = rand() % 10 + 1;
+    //printf("Philosopher %d will eat for %d seconds.\n", p, time);
 	sleep(time);
 }
 
-void think(){
+void think(int p){
 	int time = 0;
 	time = rand() % 10 + 1;
+    //printf("Philosopher %d will think for %d seconds.\n", p, time);
 	sleep(time);
 }
 
@@ -64,9 +47,9 @@ void* philosopher(void* i){
     free(i);
 
 	while(1){
-		think();
+		think(p);
 	    takeForks(p);
-	 	eat();
+	 	eat(p);
 		putForks(p);
 	}
 	return 0;

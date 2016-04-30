@@ -2,9 +2,8 @@
 #define PHILOSOPHER_H
 
 void initializeStates(int num_phil);
-void printStates();
-void eat();
-void think();
+void eat(int p);
+void think(int p);
 void *philosopher (void* i);
 
 #endif
