@@ -18,18 +18,18 @@ int *left, *right;
 void printStates(){
 	int i=0;
 	for(i=0; i<num_philosof-1; i++){
-		if(states[i] == 0)
+		if(state[i] == 0)
 			printf("T - ");
-		if(states[i] == 1)
+		if(state[i] == 1)
 			printf("H - ");
-		if(states[i] == 2)
+		if(state[i] == 2)
 			printf("E - ");
 	}
-	if(states[i] == 0)
+	if(state[i] == 0)
 		printf("T\n");
-	if(states[i] == 1)
+	if(state[i] == 1)
 		printf("H\n");
-	if(states[i] == 2)
+	if(state[i] == 2)
 		printf("E\n");
 
 }
@@ -45,9 +45,13 @@ void tryGetForks(int i){
 
 void put_forks(int i){
 	sem_wait(mutex);
+
 	state[i] = THINKING;
+	printStates();
+
 	tryGetForks(left[i]);  // check if neigh. can eat
 	tryGetForks(right[i]);
+
 	sem_post(mutex);       // end of critical region
 }
 
