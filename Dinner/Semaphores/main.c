@@ -17,17 +17,20 @@ int *left, *right;
 
 void printStates(){
 	int i=0;
-	for(i=0; i<num_philosof; i++){
-		if(state[i] == 0)
+	for(i=0; i<num_philosof-1; i++){
+		if(states[i] == 0)
 			printf("T - ");
-		if(state[i] == 1)
+		if(states[i] == 1)
 			printf("H - ");
-		if(state[i] == 2)
+		if(states[i] == 2)
 			printf("E - ");
-
-		if (i == (num_philosof - 1) )
-			printf ("\n");
 	}
+	if(states[i] == 0)
+		printf("T\n");
+	if(states[i] == 1)
+		printf("H\n");
+	if(states[i] == 2)
+		printf("E\n");
 
 }
 
