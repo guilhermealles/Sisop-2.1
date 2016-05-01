@@ -35,7 +35,6 @@ void printStates(){
 }
 
 void tryGetForks(int i){
-	//printf("Filosofo %d trying to get forks.\n", i);
 	if(state[i] == HUNGRY && state[left[i]] != EATING && state[right[i]] != EATING){
 		state[i] = EATING;
 		printStates();
@@ -45,35 +44,29 @@ void tryGetForks(int i){
 
 void put_forks(int i){
 	sem_wait(mutex);
-
 	state[i] = THINKING;
 	printStates();
-
 	tryGetForks(left[i]);  // check if neigh. can eat
 	tryGetForks(right[i]);
-
 	sem_post(mutex);       // end of critical region
 }
 
 void take_forks(int i){
-	//printf("Take forks %d \n", i);
 	sem_wait(mutex);
 	state[i] = HUNGRY;
 	printStates();
-	tryGetForks(i);       // try to get forks
-	sem_post(mutex);      // end of critical region
+	tryGetForks(i);
+	sem_post(mutex);
 	sem_wait(&sem_p[i]);  // block if forks weren't caught
 }
 
 void eat(int p){
-//	printf("Philosopher %d eating \n", p);
 	int time = 0;
 	time = rand() % 10 + 1;
 	sleep(time);
 }
 
 void think(int p){
-	//printf("Philosopher %d thinking \n", p);
 	int time = 0;
 	time = rand() % 10 + 1;
 	sleep(time);
@@ -121,18 +114,22 @@ int main (int argc, char **argv) {
 
 		right[i] = (i+num_philosof-1) % num_philosof;
 		left[i] = (i+1) % num_philosof;
-
-		printf("%d - direita %d - esquerda %d \n", i, left[i], right[i]);
 	}
 
 	// allocate mutex
 	mutex = malloc (sizeof(sem_t));
-	sem_init(mutex, 0, (num_philosof-1));
+	if (sem_init(mutex, 0, 1) == -1) {
+		fprintf(stderr, "Error initializing semaphore.\n");
+		exit(EXIT_FAILURE);
+	}
 
 	// allocate semaphore for each philosopher
 	sem_p = malloc(sizeof(sem_t) * num_philosof);
 	for(i=0; i<num_philosof; i++){
-		sem_init(&sem_p[i], 0, 1);
+		if (sem_init(&sem_p[i], 0, 1) == -1) {
+			fprintf(stderr, "Error initializing semaphore.\n");
+			exit(EXIT_FAILURE);
+		}
 	}
 
 	// allocate thread for each philosopher
