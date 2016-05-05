@@ -1,0 +1,2 @@
+PORT=40000
+SERVER_ADDR='localhost'

@@ -1,0 +1,6 @@
+*socket original é usado apenas para aceitar conexões, NÃO para troca de dados*
+Criar uma nova thread para tratar cada nova conexão
+
+Servidor fica em um loop infinito, esperando alguma mensagem no socket. Ao receber uma mensagem completa, o servidor cria uma nova thread para tratar a mensagem. Tratar a mensagem consiste de:
+	* Verificar qual o tipo da mensagem (solicitação de conexão, mensagem para um usuário, comando para o servidor, etc...)
+	* Executar a ação correspondente à mensagem e terminar a execução da thread.
