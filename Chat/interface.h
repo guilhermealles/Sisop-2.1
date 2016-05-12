@@ -2,6 +2,7 @@
 #define INTERFACE_H
 
 #define MAX_CLIENTS_PER_ROOM 30
+#define SERVER_PORT 3010
 
 typedef struct client {
     unsigned int    clientId;
@@ -14,12 +15,12 @@ typedef struct client {
 typedef struct chatRoom {
     unsigned int    roomId;
     char*           roomName;
-    CLIENTE         connectedClients[MAX_CLIENTS_PER_ROOM];
+    CLIENT         connectedClients[MAX_CLIENTS_PER_ROOM];
 } CHAT_ROOM;
 
 typedef struct message {
     unsigned int    size;
     char*           messageText;
-}
+} MESSAGE;
 
 #endif
