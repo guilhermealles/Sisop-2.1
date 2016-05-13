@@ -1,8 +1,13 @@
 #include <stdio.h>
+
 #include <stdlib.h>
+
 #include <string.h>
+
 #include <sys/socket.h>
+
 #include <netinet/in.h> // struct sockaddr_in
+
 #include "../interface.h"
 #include <pthread.h>
 
@@ -16,6 +21,7 @@
 void connectToServer();
 void setNick();
 void socketReceiver();
+void printRooms();
 
 SOCKET s;
 struct sockaddr_in  s_cli, s_serv;
@@ -31,11 +37,14 @@ int main (int argc, char **argv){
 	connectToServer();
 
 	if (pthread_create(&thread, NULL, (void *)socketReceiver, NULL) != 0) {
+
 		fprintf(stderr, "Error when creating a thread.\n");
+
 		exit(EXIT_FAILURE);
+
 	} 
 
-	printf("Welcome to Earth chat!! \n");
+	printf("Welcome to Earth chat!!!\n");
 	setNick();
 
 
@@ -43,8 +52,18 @@ int main (int argc, char **argv){
 	
 	pthread_join(thread, NULL);
 }
+
+void printRooms(){
+
+
+}
+
+
 void socketReceiver(){
-	int confirm;
+	int confirm; 
+
+	//TODO: decidir se ler um byte inicial e depois varios, ou ler os 1024
+
 	while(1){
 		bzero(receiveBuffer, 1024);
 		confirm = read(s, receiveBuffer, 1024);
@@ -55,6 +74,17 @@ void socketReceiver(){
 		}
 
 		printf("buffer: %s\n",receiveBuffer);
+
+		switch(receiveBuffer[0]){
+
+			case 'S':
+				printRooms();
+				break;
+
+			default:
+				break;
+
+		}
 	}
    return;
 
