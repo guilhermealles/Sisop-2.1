@@ -1,13 +1,8 @@
 #include <stdio.h>
-
 #include <stdlib.h>
-
 #include <string.h>
-
 #include <sys/socket.h>
-
 #include <netinet/in.h> // struct sockaddr_in
-
 #include "../interface.h"
 #include <pthread.h>
 
@@ -37,16 +32,12 @@ int main (int argc, char **argv){
 	connectToServer();
 
 	if (pthread_create(&thread, NULL, (void *)socketReceiver, NULL) != 0) {
-
 		fprintf(stderr, "Error when creating a thread.\n");
-
 		exit(EXIT_FAILURE);
-
 	} 
 
 	printf("Welcome to Earth chat!!!\n");
 	setNick();
-
 
 	// acoes clientes
 	
