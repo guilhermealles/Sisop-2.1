@@ -17,6 +17,7 @@ void connectToServer();
 void setNick();
 void socketReceiver();
 void printRooms();
+void userActions();
 
 SOCKET s;
 struct sockaddr_in  s_cli, s_serv;
@@ -27,7 +28,7 @@ char receiveBuffer[BUFF];
 
 
 int main (int argc, char **argv){
-	pthread_t thread;
+	pthread_t thread;	
 
 	connectToServer();
 
@@ -39,11 +40,49 @@ int main (int argc, char **argv){
 	printf("Welcome to Earth chat!!!\n");
 	setNick();
 
-	// acoes clientes
+	// TODO: imprime salas  - tratar atraso: usar flag, ou ..., ...
+	userActions();
+
 	
 	pthread_join(thread, NULL);
 }
 
+// TODO: programar metodos de envio das mensagens
+// TODO: decidir tag mensagem
+void userActions(){
+
+	char option;
+	int in = 1;
+
+	printf("Commands: \n");
+	printf("1 - join into a room chat\n");
+	printf("2 - create a room chat\n");
+	printf("3 - change nickname\n");
+	printf("4 - exit from Earth chat\n");
+
+	while(in){
+		scanf("%c",&option);
+
+		switch(option){
+			case '1':
+				printf("join room - insere um numero \n");	
+				break;
+			case '2':
+				printf("create room - insere um numero\n");
+				break;
+			case '3':
+				setNick();
+				break;
+			case '4':
+				exit(0);
+			default:
+				break;
+		}
+	}
+
+}
+
+//TODO
 void printRooms(){
 
 
@@ -88,13 +127,22 @@ void setNick(){
 	char nick_tag[1] = "N";
 	char* nick_package;
 	int package_length;
-	int confirm;
+	int confirm, notValidNick = 1;
    
-	printf("Please enter your nick name: \n");
-	fgets(nick, 32, stdin);	
+	do{
+		printf("Please enter your nick name: \n");
+		scanf("%s",nick);	
+	
+		if(strlen(nick) > 31){
+			printf("\n Nickname must have up to 31 characteres.\n");
+		}else{
+			notValidNick = 0;
+		}
+	}while(notValidNick);
+	
 
 	// seta tamanho dos pacotes
-	nick_package = malloc(strlen(nick) + 1 + 4); // tag + int
+	nick_package = malloc(strlen(nick) + 1 + 4); // tag + int   - somar \0 ??
 	package_length = strlen(nick) + 5;
 	printf("tamanho pacote: %d\n", package_length);
 
