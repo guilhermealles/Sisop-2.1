@@ -48,15 +48,15 @@ int main (int argc, char **argv) {
 		socklen_t clientLength = sizeof(struct sockaddr_in);
 		struct sockaddr_in clientAddr;
 		int messageSocket;
-		if ((messageSocket = accept(connectionSocket, (struct sockaddr *) &clientAddr, &clientLength) == -1)) {
+		if ((messageSocket = accept(connectionSocket, (struct sockaddr *) &clientAddr, &clientLength)) == -1) {
 			fprintf(stderr, "Error when accepting message.\n");
 			exit(EXIT_FAILURE);
 		}
 		printf("Connection accepted. Creating thread to handle message on socket %d...\n", messageSocket);
 
-		/* Malloc a new int,
-		 * Save connectionSocket to this variable,
-		 * Start the thread passing messageSocket as a parameter */
+		// Malloc a new int,
+		// Save connectionSocket to this variable,
+		// Start the thread passing messageSocket as a parameter */
 		int *thread_args = (int*)malloc(sizeof(int));
 		*thread_args = messageSocket;
 		// Memory leaking?
@@ -81,14 +81,20 @@ void* connection_thread(void* args) {
 
 	// Iterative reading until packet is completely read
 	int bytesRead=0, bytesToRead=4;
-	while(bytesRead < bytesToRead) {
+	while((bytesRead < bytesToRead) && (bytesRead < READ_BUFFER_SIZE)) {
 		printf("[THREAD] Will try to read message from socket %d.\n", messageSocket);
 		bytesRead += read(messageSocket, &buffer[bytesRead], bytesToRead);
 		printf("Read successful. Bytes read so far: %d, bytes to read: %d.\n", bytesRead, bytesToRead);
 
-		if (bytesRead >= 4) {
-			unsigned int *packetSizePtr = (unsigned int*) &buffer[0];
+		if (bytesRead == 4) {
+			unsigned int *packetSizePtr = (unsigned int*) buffer;
 			bytesToRead = *packetSizePtr;
+			printf("[THREAD] Buffer bytes:\n");
+			int i;
+			for(i=0; i<4; i++) {
+				printf("[%d]:\t\t%d\n", i, (unsigned int)buffer[i]);
+			}
+			printf("\nPacket size: %d.\n", bytesToRead);
 		}
 	}
 
