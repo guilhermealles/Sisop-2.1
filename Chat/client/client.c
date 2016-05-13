@@ -125,7 +125,7 @@ void socketReceiver(){
 
 void setNick(){
 
-	char nick_tag[1] = 'N';
+	char nick_tag = 'N';
 	char* nick_package;
 	int package_length;
 	int confirm, notValidNick = 1;
@@ -148,7 +148,7 @@ void setNick(){
 	printf("tamanho pacote: %d\n", package_length);
 
 	// concatena informacoes do pacote
-	sprintf(nick_package,"%c%d%s",nick_tag, package_length, nick);
+	sprintf(nick_package,"%c%d%s",nick_tag, package_length, nick);	
 
 	// envia para o servidor
 	confirm = write(s, nick_package, sizeof(nick_package));

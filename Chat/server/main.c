@@ -79,23 +79,34 @@ void* connection_thread(void* args) {
 	// Fill buffer with zeros
 	memset(buffer, 0, sizeof(char)*READ_BUFFER_SIZE);
 
+	int bytesRead=0;
+	bytesRead = read(messageSocket, buffer, 1);
+	if (bytesRead != 1) {
+		fprintf(stderr, "Error when reading message tag!\n");
+		exit(EXIT_FAILURE);
+	}
+
+	char *currentReadBuffer = &buffer[bytesRead];
 	// Iterative reading until packet is completely read
-	int bytesRead=0, bytesToRead=4;
+	int bytesToRead=4;
 	while((bytesRead < bytesToRead) && (bytesRead < READ_BUFFER_SIZE)) {
 		printf("[THREAD] Will try to read message from socket %d.\n", messageSocket);
-		bytesRead += read(messageSocket, &buffer[bytesRead], bytesToRead);
-		printf("Read successful. Bytes read so far: %d, bytes to read: %d.\n", bytesRead, bytesToRead);
+		int currentBytesRead = read(messageSocket, currentReadBuffer, bytesToRead);
+		bytesRead += currentBytesRead;
+		currentReadBuffer = &buffer[bytesRead];
 
-		if (bytesRead == 4) {
-			unsigned int *packetSizePtr = (unsigned int*) buffer;
+		if (currentBytesRead == 4) {
+			unsigned int *packetSizePtr = (unsigned int*) &buffer[1]; // Size address starts from the second byte
 			bytesToRead = *packetSizePtr;
+			printf("\nPacket size: %d.\n", bytesToRead);
 			printf("[THREAD] Buffer bytes:\n");
 			int i;
-			for(i=0; i<4; i++) {
+			for(i=1; i<bytesToRead; i++) {
 				printf("[%d]:\t\t%d\n", i, (unsigned int)buffer[i]);
 			}
-			printf("\nPacket size: %d.\n", bytesToRead);
 		}
+
+		printf("Read successful. Bytes read so far: %d, bytes to read: %d.\n", bytesRead, bytesToRead);
 	}
 
 	// At this point the buffer should contain a full messageSocket

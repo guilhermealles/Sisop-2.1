@@ -1,4 +1,4 @@
-128 - char nick_tag[1] = "N";       ->      char nick_tag[1] = 'N';
+128 - char nick_tag[1] = "N";       ->      char nick_tag = 'N';
     [Se colocar com aspas duplas, C vai interpretar como string e adicionar \0 no final (teria que declarar como nick_tag[2])]
 
 146 - nick_package = malloc(strlen(nick) + 1 + 4); // tag + int   - somar \0 ??     ->      nick_package = malloc(sizeof(char) + sizeof(int) + strlen(nick)+1);
