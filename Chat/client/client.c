@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h> // struct sockaddr_in
 #include "../interface.h"
@@ -28,14 +29,14 @@ char receiveBuffer[BUFF];
 
 
 int main (int argc, char **argv){
-	pthread_t thread;	
+	pthread_t thread;
 
 	connectToServer();
 
 	if (pthread_create(&thread, NULL, (void *)socketReceiver, NULL) != 0) {
 		fprintf(stderr, "Error when creating a thread.\n");
 		exit(EXIT_FAILURE);
-	} 
+	}
 
 	printf("Welcome to Earth chat!!!\n");
 	setNick();
@@ -43,7 +44,7 @@ int main (int argc, char **argv){
 	// TODO: imprime salas  - tratar atraso: usar flag, ou ..., ...
 	userActions();
 
-	
+
 	pthread_join(thread, NULL);
 }
 
@@ -65,7 +66,7 @@ void userActions(){
 
 		switch(option){
 			case '1':
-				printf("join room - insere um numero \n");	
+				printf("join room - insere um numero \n");
 				break;
 			case '2':
 				printf("create room - insere um numero\n");
@@ -90,7 +91,7 @@ void printRooms(){
 
 
 void socketReceiver(){
-	int confirm; 
+	int confirm;
 
 	//TODO: decidir se ler um byte inicial e depois varios, ou ler os 1024
 
@@ -124,31 +125,31 @@ void socketReceiver(){
 
 void setNick(){
 
-	char nick_tag[1] = "N";
+	char nick_tag[1] = 'N';
 	char* nick_package;
 	int package_length;
 	int confirm, notValidNick = 1;
-   
+
 	do{
 		printf("Please enter your nick name: \n");
-		scanf("%s",nick);	
-	
+		scanf("%s",nick);
+
 		if(strlen(nick) > 31){
-			printf("\n Nickname must have up to 31 characteres.\n");
+			printf("\n Nickname must have up to 31 characters.\n");
 		}else{
 			notValidNick = 0;
 		}
 	}while(notValidNick);
-	
+
 
 	// seta tamanho dos pacotes
-	nick_package = malloc(strlen(nick) + 1 + 4); // tag + int   - somar \0 ??
-	package_length = strlen(nick) + 5;
+	nick_package = malloc(sizeof(char) + sizeof(int) + strlen(nick)); // tag + int   - somar \0 ??
+	package_length = sizeof(char) + sizeof(int) + strlen(nick);
 	printf("tamanho pacote: %d\n", package_length);
 
 	// concatena informacoes do pacote
-	sprintf(nick_package,"%s%s%d",nick_tag, nick_tag, package_length);
-	
+	sprintf(nick_package,"%c%d%s",nick_tag, package_length, nick);
+
 	// envia para o servidor
 	confirm = write(s, nick_package, sizeof(nick_package));
 
@@ -160,7 +161,7 @@ void setNick(){
 
 }
 
-void connectToServer(){	
+void connectToServer(){
 
 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET){
 		printf("Erro iniciando socket\n");
@@ -175,5 +176,5 @@ void connectToServer(){
 		printf("Erro na conexao\n");
 		close(s);
 		exit(1);
-	}	
+	}
 }
