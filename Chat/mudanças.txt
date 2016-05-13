@@ -10,3 +10,10 @@
 
 151 - sprintf(nick_package,"%s%s%d",nick_tag, nick_tag, package_length);        ->      sprintf(nick_package,"%c%d%s",nick_tag, package_length, nick);
     [Não entendi o "%s%s%d" nem os parâmetros, se eu tiver feito merda me avisa pf hahah]
+
+
+151 - sprintf(nick_package,"%c%d%s",nick_tag, package_length, nick);
+    [Na real parando pra pensar, será que não é melhor ter uma struct pra cada tipo de mensagem?
+     Vai facilitar um monte na leitura das mensagens, é só fazer um ponteiro da struct apontar
+     pro buffer... Criei uma no interfaces.h só pra demonstrar como seria, dá uma olhada e
+     me diz o que tu acha]

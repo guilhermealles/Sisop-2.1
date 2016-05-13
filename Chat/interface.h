@@ -30,4 +30,9 @@ typedef struct message {
     char*           messageText;
 } MESSAGE;
 
+typedef struct nickMessage {
+    char            tag;
+    unsigned int    size;
+    char            nick[32];
+} NICK_MESSAGE;
 #endif

@@ -148,10 +148,14 @@ void setNick(){
 	printf("tamanho pacote: %d\n", package_length);
 
 	// concatena informacoes do pacote
-	sprintf(nick_package,"%c%d%s",nick_tag, package_length, nick);	
+	/*sprintf(nick_package,"%c%d%s",nick_tag, package_length, nick);*/
+	NICK_MESSAGE *nick_message = malloc(sizeof(NICK_MESSAGE));
+	nick_message->tag = nick_tag;
+	nick_message->size = package_length;
+	strcpy(nick_message->nick, nick);
 
 	// envia para o servidor
-	confirm = write(s, nick_package, sizeof(nick_package));
+	confirm = write(s, nick_message, sizeof(NICK_MESSAGE));
 
 	if (confirm < 0){
 		printf("Erro na transmissão\n");
