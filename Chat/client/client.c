@@ -17,14 +17,16 @@
 void connectToServer();
 void setNick();
 void socketReceiver();
-void printRooms();
+void printRooms(int size);
 void userActions();
+void joinRoom();
 
 SOCKET s;
 struct sockaddr_in  s_cli, s_serv;
 int porta_cli;
 char nick[32];
-char receiveBuffer[BUFF];
+char byteInicio;
+char *receiveBuffer;
 
 
 
@@ -57,9 +59,11 @@ void userActions(){
 
 	printf("Commands: \n");
 	printf("1 - join into a room chat\n");
-	printf("2 - create a room chat\n");
-	printf("3 - change nickname\n");
-	printf("4 - exit from Earth chat\n");
+	printf("2 - leave a room chat\n");
+	printf("3 - create a room chat\n");
+	printf("4 - change nickname\n");
+	printf("5 - exit from Earth chat\n");
+
 
 	while(in){
 		scanf("%c",&option);
@@ -67,14 +71,19 @@ void userActions(){
 		switch(option){
 			case '1':
 				printf("join room - insere um numero \n");
+				joinRoom();
 				break;
 			case '2':
-				printf("create room - insere um numero\n");
+				printf("leave room \n");
 				break;
 			case '3':
-				setNick();
+				printf("create room - insere um numero\n");
 				break;
 			case '4':
+				setNick();
+				break;
+			case '5':
+				close(s);
 				exit(0);
 			default:
 				break;
@@ -83,8 +92,28 @@ void userActions(){
 
 }
 
+void joinRoom(){
+
+}
 //TODO
-void printRooms(){
+void printRooms(int size){
+	int confirm, i;
+	char buffer[size];
+
+	bzero(buffer, size);
+	confirm = read(s, buffer, size);
+
+	if (confirm < 0) {
+	  perror("ERROR reading from socket");
+	  exit(1);
+	}
+	
+	printf("Numero de salas: %c\n", buffer[0]);
+    for (i=1; i < confirm; i++) {
+		printf("%c", buffer[i]);
+	}
+
+	
 
 
 }
@@ -92,24 +121,36 @@ void printRooms(){
 
 void socketReceiver(){
 	int confirm;
+	char firstByte[1];
+	char pack_lenght[4];
+	int convert_pack_lenght;
 
 	//TODO: decidir se ler um byte inicial e depois varios, ou ler os 1024
 
 	while(1){
-		bzero(receiveBuffer, 1024);
-		confirm = read(s, receiveBuffer, 1024);
+		bzero(firstByte, 0);
+		confirm = read(s, firstByte, 1);
 
 		if (confirm < 0) {
 		  perror("ERROR reading from socket");
 		  exit(1);
 		}
 
-		printf("buffer: %s\n",receiveBuffer);
+	//	printf("buffer: %s\n",receiveBuffer);
 
-		switch(receiveBuffer[0]){
+		switch(firstByte[0]){
 
 			case 'S':
-				printRooms();
+				confirm = read(s, pack_lenght, 4);
+
+				if (confirm < 0) {
+				  perror("ERROR reading from socket");
+				  exit(1);
+				}
+				convert_pack_lenght = *((int*)pack_lenght);
+				
+				printRooms(convert_pack_lenght);
+
 				break;
 
 			default:
@@ -148,7 +189,6 @@ void setNick(){
 	printf("tamanho pacote: %d\n", package_length);
 
 	// concatena informacoes do pacote
-	/*sprintf(nick_package,"%c%d%s",nick_tag, package_length, nick);*/
 	NICK_MESSAGE *nick_message = malloc(sizeof(NICK_MESSAGE));
 	nick_message->tag = nick_tag;
 	nick_message->size = package_length;
@@ -156,7 +196,7 @@ void setNick(){
 
 	// envia para o servidor
 	confirm = write(s, nick_message, sizeof(NICK_MESSAGE));
-
+	printf("enviou\n");
 	if (confirm < 0){
 		printf("Erro na transmissão\n");
 		close(s);

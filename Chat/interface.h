@@ -16,7 +16,7 @@ typedef struct client {
     char*           name;
     unsigned int    chatRoom;
     unsigned int    port;
-    char*           ip;     /* TODO Representamos IP como uma string? */
+    char*           ip;     /* TODO Representamos IP como uma string? yep */
 } CLIENT;
 
 typedef struct chatRoom {
