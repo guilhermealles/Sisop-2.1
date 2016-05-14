@@ -35,4 +35,11 @@ typedef struct nickMessage {
     unsigned int    size;
     char            nick[32];
 } NICK_MESSAGE;
+
+typedef struct joinMessage {
+    char            tag;
+    unsigned int    size;
+    int             room;
+
+} JOIN_MESSAGE;
 #endif
