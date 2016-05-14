@@ -109,9 +109,9 @@ void requestRoomList(){
 	// envia para o servidor
 	confirm = write(s, req_message, sizeof(REQUEST_ROOM_MESSAGE));
 	if (confirm < 0){
-		printf("Erro na transmissão\n");
+		printf("Erro na transmissão.\n");
 		close(s);
-		return;
+		return; 
 	}
 }
 
