@@ -20,13 +20,18 @@ void socketReceiver();
 void printRooms(int size);
 void userActions();
 void joinRoom();
+void leaveRoom();
+void requestRoomList();
 
 SOCKET s;
+CHAT_ROOM *chat_room;
 struct sockaddr_in  s_cli, s_serv;
 int porta_cli;
 char nick[32];
 char byteInicio;
 char *receiveBuffer;
+int number_of_rooms;
+int selectedRoom = 0;
 
 
 
@@ -42,6 +47,7 @@ int main (int argc, char **argv){
 
 	printf("Welcome to Earth chat!!!\n");
 	setNick();
+	requestRoomList()
 
 	// TODO: imprime salas  - tratar atraso: usar flag, ou ..., ...
 	userActions();
@@ -50,8 +56,6 @@ int main (int argc, char **argv){
 	pthread_join(thread, NULL);
 }
 
-// TODO: programar metodos de envio das mensagens
-// TODO: decidir tag mensagem
 void userActions(){
 
 	char option;
@@ -75,6 +79,7 @@ void userActions(){
 				break;
 			case '2':
 				printf("leave room \n");
+				leaveRoom();
 				break;
 			case '3':
 				printf("create room - insere um numero\n");
@@ -92,13 +97,94 @@ void userActions(){
 
 }
 
+void requestRoomList(){
+	char req_tag = 'R';
+	int confirm;
+
+	// concatena informacoes do pacote
+	REQUEST_ROOM_MESSAGE *req_message = malloc(sizeof(REQUEST_ROOM_MESSAGE));
+	req_message->tag = req_tag;
+	req_message->size = 0;
+
+	// envia para o servidor
+	confirm = write(s, req_message, sizeof(REQUEST_ROOM_MESSAGE));
+	if (confirm < 0){
+		printf("Erro na transmissão\n");
+		close(s);
+		return;
+	}
+}
+
+void leaveRoom(){
+	int package_length, confirm;
+	char leave_tag = 'L';
+
+	if(selectedRoom != 0){
+		package_length = 0;
+
+		// concatena informacoes do pacote
+		LEAVE_MESSAGE *leave_message = malloc(sizeof(LEAVE_MESSAGE));
+		leave_message->tag = leave_tag;
+		leave_message->size = 0;
+
+		// envia para o servidor
+		confirm = write(s, leave_message, sizeof(LEAVE_MESSAGE));
+		if (confirm < 0){
+			printf("Erro na transmissão\n");
+			close(s);
+			return;
+		}
+	//TODO: ler resposta
+	}
+
+	requestRoomList();
+}
+
 void joinRoom(){
+	int i, find = 0, confirm;
+	int package_length;
+	char join_tag = 'J';
+	
+	printf("Select a room:\n");
+	scanf("%d",&selectedRoom);
+
+	printf("sala escolhida %d\n", selectedRoom);
+
+	for(i=0; i<number_of_rooms; i++){
+		if(chat_room[i].roomId == selectedRoom){
+			find = 1;
+		}
+	}
+
+	if(find == 1){
+		package_length = sizeof(char) + sizeof(int);
+
+		// concatena informacoes do pacote
+		JOIN_MESSAGE *join_message = malloc(sizeof(JOIN_MESSAGE));
+		join_message->tag = join_tag;
+		join_message->size = package_length;
+		join_message->room = selectedRoom;
+
+		// envia para o servidor
+		confirm = write(s, join_message, sizeof(JOIN_MESSAGE));
+		if (confirm < 0){
+			printf("Erro na transmissão\n");
+			close(s);
+			return;
+		}
+	//TODO: ler resposta
+		
+	}else{
+		printf("Selected room doesn't exist. \n");
+		selectedRoom = 0;
+	}	
 
 }
-//TODO
+
 void printRooms(int size){
-	int confirm, i;
+	int confirm, i, ind = 1;
 	char buffer[size];
+	char room_name[21];  
 
 	bzero(buffer, size);
 	confirm = read(s, buffer, size);
@@ -108,13 +194,24 @@ void printRooms(int size){
 	  exit(1);
 	}
 	
-	printf("Numero de salas: %c\n", buffer[0]);
-    for (i=1; i < confirm; i++) {
-		printf("%c", buffer[i]);
+	// pega o byte que indica o numero de salas
+	number_of_rooms = buffer[0] - '0';
+	printf("Numero de salas: %d\n", number_of_rooms);
+
+	chat_room = (CHAT_ROOM*) malloc(size * sizeof(CHAT_ROOM));	
+
+    for (i=0; i < number_of_rooms; i++) {   
+		// guarda id da sala		
+		chat_room[i].roomId = buffer[ind] - '0';
+
+		// seleciona os 21 bytes do buffer referentes ao nome - incluindo \0
+		memcpy(room_name, &buffer[ind + 1 ], 21 );		
+		strcpy(chat_room[i].roomName, room_name); 
+
+		printf("%d - %s\n", chat_room[i].roomId, chat_room[i].roomName);
+
+		ind+= 22;
 	}
-
-	
-
 
 }
 
@@ -124,8 +221,6 @@ void socketReceiver(){
 	char firstByte[1];
 	char pack_lenght[4];
 	int convert_pack_lenght;
-
-	//TODO: decidir se ler um byte inicial e depois varios, ou ler os 1024
 
 	while(1){
 		bzero(firstByte, 0);
@@ -196,13 +291,13 @@ void setNick(){
 
 	// envia para o servidor
 	confirm = write(s, nick_message, sizeof(NICK_MESSAGE));
-	printf("enviou\n");
 	if (confirm < 0){
 		printf("Erro na transmissão\n");
 		close(s);
 		return;
 	}
 
+	//TODO: ler resposta
 }
 
 void connectToServer(){
