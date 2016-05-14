@@ -47,7 +47,7 @@ int main (int argc, char **argv){
 
 	printf("Welcome to Earth chat!!!\n");
 	setNick();
-	requestRoomList()
+	requestRoomList();
 
 	// TODO: imprime salas  - tratar atraso: usar flag, ou ..., ...
 	userActions();
