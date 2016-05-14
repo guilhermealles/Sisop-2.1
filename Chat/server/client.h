@@ -9,4 +9,6 @@ typedef struct client {
     unsigned int    chatRoom;
 } CLIENT;
 
+int registerNewClient(char *nick);
+
 #endif
