@@ -111,7 +111,7 @@ void requestRoomList(){
 	if (confirm < 0){
 		printf("Erro na transmissão.\n");
 		close(s);
-		return; 
+		return;
 	}
 }
 
@@ -144,7 +144,7 @@ void joinRoom(){
 	int i, find = 0, confirm;
 	int package_length;
 	char join_tag = 'J';
-	
+
 	printf("Select a room:\n");
 	scanf("%d",&selectedRoom);
 
@@ -173,18 +173,18 @@ void joinRoom(){
 			return;
 		}
 	//TODO: ler resposta
-		
+
 	}else{
 		printf("Selected room doesn't exist. \n");
 		selectedRoom = 0;
-	}	
+	}
 
 }
 
 void printRooms(int size){
 	int confirm, i, ind = 1;
 	char buffer[size];
-	char room_name[21];  
+	char room_name[21];
 
 	bzero(buffer, size);
 	confirm = read(s, buffer, size);
@@ -193,20 +193,20 @@ void printRooms(int size){
 	  perror("ERROR reading from socket");
 	  exit(1);
 	}
-	
+
 	// pega o byte que indica o numero de salas
 	number_of_rooms = buffer[0] - '0';
 	printf("Numero de salas: %d\n", number_of_rooms);
 
-	chat_room = (CHAT_ROOM*) malloc(size * sizeof(CHAT_ROOM));	
+	chat_room = (CHAT_ROOM*) malloc(size * sizeof(CHAT_ROOM));
 
-    for (i=0; i < number_of_rooms; i++) {   
-		// guarda id da sala		
+    for (i=0; i < number_of_rooms; i++) {
+		// guarda id da sala
 		chat_room[i].roomId = buffer[ind] - '0';
 
 		// seleciona os 21 bytes do buffer referentes ao nome - incluindo \0
-		memcpy(room_name, &buffer[ind + 1 ], 21 );		
-		strcpy(chat_room[i].roomName, room_name); 
+		memcpy(room_name, &buffer[ind + 1 ], 21 );
+		strcpy(chat_room[i].roomName, room_name);
 
 		printf("%d - %s\n", chat_room[i].roomId, chat_room[i].roomName);
 
@@ -243,7 +243,7 @@ void socketReceiver(){
 				  exit(1);
 				}
 				convert_pack_lenght = *((int*)pack_lenght);
-				
+
 				printRooms(convert_pack_lenght);
 
 				break;

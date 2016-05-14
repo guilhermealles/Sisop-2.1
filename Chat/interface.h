@@ -4,20 +4,17 @@
 #define MAX_CLIENTS_PER_ROOM 30
 #define SERVER_PORT 3010
 
-// List of all possible "tags"
-#define LIST_ROOMS 1
-#define JOIN_ROOM 2
-#define MESSAGE_TO_ROOM 3
-#define LEAVE_ROOM 4
-#define CHANGE_NICK 5
+// Possible server responses
+#define SERV_REPLY_OK 1
+#define SERV_REPLY_FAIL 0
 
-typedef struct client {
-    unsigned int    clientId;
-    char*           name;
-    unsigned int    chatRoom;
-    unsigned int    port;
-    char*           ip;     /* TODO Representamos IP como uma string? yep */
-} CLIENT;
+// List of all possible "tags"
+#define SERVER_REPLY 'R'
+#define LIST_ROOMS 1
+#define JOIN_ROOM 'J'
+#define MESSAGE_TO_ROOM 3
+#define LEAVE_ROOM 'L'
+#define SET_NICK 'N'
 
 typedef struct chatRoom {
     unsigned int    roomId;
@@ -54,4 +51,10 @@ typedef struct requestRoomMessage {
     unsigned int    size;
 
 } REQUEST_ROOM_MESSAGE;
+
+typedef struct serverResponse {
+    char            tag;
+    int             response;
+    char*           message;        // Em caso de erro, dá pra imprimir essa mensagem pro cliente...
+} SERVER_RESPONSE;
 #endif

@@ -46,7 +46,7 @@ int main (int argc, char **argv) {
 	while (1) {
 		// Accept a connection
 		socklen_t clientLength = sizeof(struct sockaddr_in);
-		struct sockaddr_in clientAddr;
+		struct sockaddr clientAddr;
 		int messageSocket;
 		if ((messageSocket = accept(connectionSocket, (struct sockaddr *) &clientAddr, &clientLength)) == -1) {
 			fprintf(stderr, "Error when accepting message.\n");
@@ -54,14 +54,17 @@ int main (int argc, char **argv) {
 		}
 		printf("Connection accepted. Creating thread to handle message on socket %d...\n", messageSocket);
 
-		// Malloc a new int,
-		// Save connectionSocket to this variable,
-		// Start the thread passing messageSocket as a parameter */
-		int *thread_args = (int*)malloc(sizeof(int));
-		*thread_args = messageSocket;
-		// Memory leaking?
+		// Malloc a void* variable,
+		// First 4 bytes contains an int with the messageSocket descriptor
+		// Remaining bytes are the cliAddr structure
+		void *thread_args = (void*) malloc(sizeof(int) + sizeof(struct sockaddr));
+		int *firstArg = &thread_args[0];
+		struct sockaddr *secondArg = &thread_args[sizeof(int)];
+		*firstArg = messageSocket;
+		memcpy(secondArg, (void*) &clientAddr, clientLength);
+
 		pthread_t thread;
-		if (pthread_create(&thread, NULL, (void *)connection_thread, (void *)thread_args) != 0) {
+		if (pthread_create(&thread, NULL, (void *)connection_thread, thread_args) != 0) {
 			fprintf(stderr, "Error when creating a connection thread.\n");
 			exit(EXIT_FAILURE);
 		}
@@ -72,57 +75,84 @@ int main (int argc, char **argv) {
 }
 
 void* connection_thread(void* args) {
-	int *messageSocket_p = (int*) args;
+	// Unwrap arguments
+	int *messageSocket_p = (int*) &args[0];
 	int messageSocket = *messageSocket_p;
+	struct sockaddr *clientAddr_p = (struct sockaddr *) &args[sizeof(int)];
+	struct sockaddr clientAddr = *clientAddr_p;
+	printf("[THREAD] Will try to read message from socket %d.\n", messageSocket);
+
 	char buffer[READ_BUFFER_SIZE];
 
 	// Fill buffer with zeros
 	memset(buffer, 0, sizeof(char)*READ_BUFFER_SIZE);
-	int bytesRead = read(messageSocket, buffer, READ_BUFFER_SIZE);
-	/*
-	int bytesRead=0;
-	bytesRead = read(messageSocket, buffer, 1);
-	if (bytesRead != 1) {
-		fprintf(stderr, "Error when reading message tag!\n");
+	int bytesRead = 0;
+	while (bytesRead < 1) {
+		// Try to read at least first byte (containing the tag)
+		int currentBytesRead = read(messageSocket, &buffer[bytesRead], READ_BUFFER_SIZE);
+		bytesRead += currentBytesRead;
+	}
+	int bytesToRead=0;
+	switch(buffer[0]) {
+		case SET_NICK:
+			bytesToRead = sizeof(NICK_MESSAGE) - bytesRead;
+			break;
+		/*
+		 * TODO Add Other cases
+		 */
+		 default:
+		 	fprintf(stderr, "[THREAD] Error: unrecognized tag \"%c\".\n", buffer[0]);
+			exit(EXIT_FAILURE);
+			break;
+	}
+	if (bytesToRead < 0) {
+		fprintf(stderr, "[THREAD] Error: bytesToRead is less than 0!\n");
 		exit(EXIT_FAILURE);
 	}
-
-	char *currentReadBuffer = &buffer[bytesRead];
-	// Iterative reading until packet is completely read
-	int bytesToRead=5;
-	while((bytesRead < bytesToRead) && (bytesRead < READ_BUFFER_SIZE)) {
-		printf("[THREAD] Will try to read message from socket %d.\n", messageSocket);
-		bytesRead += read(messageSocket, currentReadBuffer, bytesToRead);
-		currentReadBuffer = &buffer[bytesRead];
-
-		if (bytesRead == 5) {
-			unsigned int *packetSizePtr = (unsigned int*) &buffer[1]; // Size address starts from the second byte
-			bytesToRead = *packetSizePtr;
-			printf("\nPacket size: %d.\n", bytesToRead);
-			printf("[THREAD] Buffer size bytes:\n");
-			int i;
-			for(i=1; i<5; i++) {
-				printf("[%d]:\t\t%d\n", i, (unsigned int)buffer[i]);
-			}
-		}
-
-		printf("Read successful. Bytes read so far: %d, bytes to read: %d.\n", bytesRead, bytesToRead);
+	// Read the remaining part of the packet (if any)
+	while (bytesToRead != 0) {
+		int currentBytesRead = read(messageSocket, &buffer[bytesRead], bytesToRead);
+		bytesRead += currentBytesRead;
+		bytesToRead -= currentBytesRead;
 	}
-	*/
 
-	// At this point the buffer should contain a full messageSocket
+	int serverResponse = SERV_REPLY_FAIL;
+	// Switch the packet to the correct message, and treat accordingly
+	void *message;
+	switch(buffer[0]) {
+		case SET_NICK:
+			message = malloc(sizeof(NICK_MESSAGE));
+			NICK_MESSAGE *received_message = (NICK_MESSAGE*) message;
+			memcpy(received_message, buffer, sizeof(NICK_MESSAGE));
+			// serverResponse = changenick();
 
-	printf("Successfuly read %d bytes from socket with ID #%d. Message is:\n", bytesRead, messageSocket);
-	/* TMP */
-	int i;
-	for (i=0; i<bytesRead; i++) {
-		printf("%c", buffer[i]);
+			// TODO FREE received_message!!!!!
+			break;
+
+		/*
+		 * TODO Add other cases
+		 */
+		 default:
+		 	fprintf(stderr, "[THREAD] Error: unrecognized tag \"%c\".\n", buffer[0]);
+			exit(EXIT_FAILURE);
+			break;
 	}
-	printf("\n");
+
+	// Send response to client
+	SERVER_RESPONSE *response = malloc(sizeof(SERVER_RESPONSE));
+	response->tag = SERVER_REPLY;
+	response->response = serverResponse;
+	int confirm = write(messageSocket, response, sizeof(SERVER_RESPONSE));
+	if (confirm < 0) {
+		fprintf(stderr, "[THREAD] Error sending reply to client");
+		exit(EXIT_FAILURE);
+	}
 
 	// Close the socket and free allocated memory
 	close(messageSocket);
 	free(messageSocket_p);
+	free(clientAddr_p);
+	free(response);
 
 	return 0;
 }
