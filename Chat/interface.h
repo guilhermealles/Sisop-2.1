@@ -1,8 +1,10 @@
 #ifndef INTERFACE_H
 #define INTERFACE_H
 
-#define MAX_CLIENTS_PER_ROOM 30
+// Some constants
 #define SERVER_PORT 3010
+#define MAX_CLIENTS_PER_ROOM 30
+#define MAX_NICK_LENGTH 31
 
 // Possible server responses
 #define SERV_REPLY_OK 1
@@ -10,10 +12,11 @@
 
 // List of all possible "tags"
 #define SERVER_REPLY 'R'
-#define LIST_ROOMS 1
+#define CLIENT_REGISTER 'C'
+#define LIST_ROOMS 'L'
 #define JOIN_ROOM 'J'
-#define MESSAGE_TO_ROOM 3
-#define LEAVE_ROOM 'L'
+#define MESSAGE_TO_ROOM 'M'
+#define LEAVE_ROOM 'Q'
 #define SET_NICK 'N'
 
 typedef struct chatRoom {
@@ -23,32 +26,40 @@ typedef struct chatRoom {
 } CHAT_ROOM;
 
 typedef struct message {
+    char            tag;
     unsigned int    size;
+    unsigned int    clientId;
     char*           messageText;
+
 } MESSAGE;
 
 typedef struct nickMessage {
     char            tag;
     unsigned int    size;
-    char            nick[32];
+    unsigned int    clientId;
+    char            nick[MAX_NICK_LENGTH];
+
 } NICK_MESSAGE;
 
 typedef struct joinMessage {
     char            tag;
     unsigned int    size;
-    int             room;
+    unsigned int    clientId;
+    unsigned int    room;
 
 } JOIN_MESSAGE;
 
 typedef struct leaveMessage {
     char            tag;
     unsigned int    size;
+    unsigned int    clientId;
 
 } LEAVE_MESSAGE;
 
 typedef struct requestRoomMessage {
     char            tag;
     unsigned int    size;
+    unsigned int    clientId;
 
 } REQUEST_ROOM_MESSAGE;
 

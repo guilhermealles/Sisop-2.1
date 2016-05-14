@@ -6,6 +6,7 @@
 #include <netinet/in.h> // struct sockaddr_in
 #include <pthread.h>
 #include "../interface.h"
+#include "client.h"
 
 #define MAX_SIMULT_CONN 20
 #define READ_BUFFER_SIZE 1024
@@ -17,6 +18,7 @@ int main (int argc, char **argv) {
 	struct sockaddr_in servAddr;
 
 	printf("Initializing server...\n");
+	initialzieClientsManager();
 	printf("Creating connection socket...\n");
 	// Try to open connection socket
 	connectionSocket = socket(AF_INET, SOCK_STREAM, 0);

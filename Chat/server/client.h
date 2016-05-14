@@ -5,10 +5,14 @@
 
 typedef struct client {
     unsigned int    clientId;
-    char*           name;
+    char            nick[31];
     unsigned int    chatRoom;
 } CLIENT;
 
+void initializeClientsManager();
 int registerNewClient(char *nick);
+int changeClientNick(int clientId, char *newNick);
+int changeClientRoom(int clientId, unsigned int newRom);
+int leaveRoom(int clientId);
 
 #endif
