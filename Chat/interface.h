@@ -74,4 +74,10 @@ typedef struct serverResponse {
     int             response;
     char*           message;        // Em caso de erro, dá pra imprimir essa mensagem pro cliente...
 } SERVER_RESPONSE;
+
+typedef struct requestRegister{
+    char            tag;
+    unsigned int    size;
+    char*           nick; 
+}REQUEST_REGISTER;
 #endif

@@ -22,10 +22,13 @@ void userActions();
 void joinRoom();
 void leaveRoom();
 void requestRoomList();
+void requestRegister();
 
 SOCKET s;
 CHAT_ROOM *chat_room;
 struct sockaddr_in  s_cli, s_serv;
+
+int ID;
 int porta_cli;
 char nick[32];
 char byteInicio;
@@ -46,7 +49,7 @@ int main (int argc, char **argv){
 	}
 
 	printf("Welcome to Earth chat!!!\n");
-	setNick();
+	requestRegister();
 	requestRoomList();
 
 	// TODO: imprime salas  - tratar atraso: usar flag, ou ..., ...
@@ -97,14 +100,75 @@ void userActions(){
 
 }
 
+void socketReceiver(){
+	int confirm;
+	char firstByte[1];
+	char pack_lenght[4], pack_response[4], pack_id[4];
+	int convert_pack_lenght, response;
+
+	while(1){
+		bzero(firstByte, 0);
+		confirm = read(s, firstByte, 1);
+
+		if (confirm < 0) {
+		  perror("ERROR reading from socket");
+		  exit(1);
+		}
+
+	//	printf("buffer: %s\n",receiveBuffer);
+
+		switch(firstByte[0]){
+		
+			case SERVER_REPLY:
+				confirm = read(s, pack_response, 4);
+
+				if (confirm < 0) {
+				  perror("ERROR reading from socket");
+				  exit(1);
+				}
+				response = *((int*)pack_response);
+
+				if(response == SERV_REPLY_OK){
+					confirm = read(s, pack_id, 4);
+					ID = (int) strtol(pack_id, NULL, 10);
+					printf("id: %d\n", ID);
+				}else{
+					printf("err\n");
+				}
+
+				break;
+
+			case LIST_ROOMS:
+				confirm = read(s, pack_lenght, 4);
+
+				if (confirm < 0) {
+				  perror("ERROR reading from socket");
+				  exit(1);
+				}
+				convert_pack_lenght = *((int*)pack_lenght);
+
+				printRooms(convert_pack_lenght);
+
+				break;
+
+			default:
+				break;
+
+		}
+	}
+   return;
+
+
+}
+
 void requestRoomList(){
-	char req_tag = 'R';
 	int confirm;
 
 	// concatena informacoes do pacote
 	REQUEST_ROOM_MESSAGE *req_message = malloc(sizeof(REQUEST_ROOM_MESSAGE));
-	req_message->tag = req_tag;
+	req_message->tag = LIST_ROOMS;
 	req_message->size = 0;
+	req_message->clientId = ID;
 
 	// envia para o servidor
 	confirm = write(s, req_message, sizeof(REQUEST_ROOM_MESSAGE));
@@ -117,14 +181,14 @@ void requestRoomList(){
 
 void leaveRoom(){
 	int package_length, confirm;
-	char leave_tag = 'L';
 
 	if(selectedRoom != 0){
 		package_length = 0;
 
 		// concatena informacoes do pacote
 		LEAVE_MESSAGE *leave_message = malloc(sizeof(LEAVE_MESSAGE));
-		leave_message->tag = leave_tag;
+		leave_message->clientId = ID;
+		leave_message->tag = LEAVE_ROOM;
 		leave_message->size = 0;
 
 		// envia para o servidor
@@ -134,7 +198,6 @@ void leaveRoom(){
 			close(s);
 			return;
 		}
-	//TODO: ler resposta
 	}
 
 	requestRoomList();
@@ -161,9 +224,10 @@ void joinRoom(){
 
 		// concatena informacoes do pacote
 		JOIN_MESSAGE *join_message = malloc(sizeof(JOIN_MESSAGE));
-		join_message->tag = join_tag;
+		join_message->tag = JOIN_ROOM;
 		join_message->size = package_length;
 		join_message->room = selectedRoom;
+		join_message->clientId = ID;
 
 		// envia para o servidor
 		confirm = write(s, join_message, sizeof(JOIN_MESSAGE));
@@ -172,7 +236,6 @@ void joinRoom(){
 			close(s);
 			return;
 		}
-	//TODO: ler resposta
 
 	}else{
 		printf("Selected room doesn't exist. \n");
@@ -215,53 +278,43 @@ void printRooms(int size){
 
 }
 
+void requestRegister(){
+	char* nick_package;
+	int package_length;
+	int confirm, notValidNick = 1;
 
-void socketReceiver(){
-	int confirm;
-	char firstByte[1];
-	char pack_lenght[4];
-	int convert_pack_lenght;
+	do{
+		printf("Please enter your nick name: \n");
+		scanf("%s",nick);
 
-	while(1){
-		bzero(firstByte, 0);
-		confirm = read(s, firstByte, 1);
-
-		if (confirm < 0) {
-		  perror("ERROR reading from socket");
-		  exit(1);
+		if(strlen(nick) > 31){
+			printf("\n Nickname must have up to 31 characters.\n");
+		}else{
+			notValidNick = 0;
 		}
+	}while(notValidNick);
 
-	//	printf("buffer: %s\n",receiveBuffer);
 
-		switch(firstByte[0]){
+	// seta tamanho dos pacotes
+	package_length = sizeof(char) + sizeof(int) + strlen(nick);
 
-			case 'S':
-				confirm = read(s, pack_lenght, 4);
+	// concatena informacoes do pacote
+	REQUEST_REGISTER *request_message = malloc(sizeof(REQUEST_REGISTER));
+	request_message->tag = CLIENT_REGISTER;
+	request_message->size = package_length;
+	strcpy(request_message->nick, nick);
 
-				if (confirm < 0) {
-				  perror("ERROR reading from socket");
-				  exit(1);
-				}
-				convert_pack_lenght = *((int*)pack_lenght);
-
-				printRooms(convert_pack_lenght);
-
-				break;
-
-			default:
-				break;
-
-		}
+	// envia para o servidor
+	confirm = write(s, request_message, sizeof(REQUEST_REGISTER));
+	if (confirm < 0){
+		printf("Erro na transmissão\n");
+		close(s);
+		return;
 	}
-   return;
-
 
 }
-
-
 void setNick(){
 
-	char nick_tag = 'N';
 	char* nick_package;
 	int package_length;
 	int confirm, notValidNick = 1;
@@ -285,8 +338,9 @@ void setNick(){
 
 	// concatena informacoes do pacote
 	NICK_MESSAGE *nick_message = malloc(sizeof(NICK_MESSAGE));
-	nick_message->tag = nick_tag;
+	nick_message->tag = SET_NICK;
 	nick_message->size = package_length;
+	nick_message->clientId = ID;
 	strcpy(nick_message->nick, nick);
 
 	// envia para o servidor
@@ -296,8 +350,6 @@ void setNick(){
 		close(s);
 		return;
 	}
-
-	//TODO: ler resposta
 }
 
 void connectToServer(){
