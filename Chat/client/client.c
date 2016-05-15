@@ -268,14 +268,8 @@ void requestRoomList(){
 			close(s);
 			return;
 		}
-<<<<<<< HEAD
 
-	}
-	rec = read(s, pack_lenght, 4);
-=======
-	
-	}while(firstByte[0] != 'S');
->>>>>>> 35343db16f7f4fdf3648c427c8121e7833d21dc4
+	} while(firstByte[0] != 'S');
 
 	rec = read(s, pack_lenght, 4);
 	if(rec < 0){
