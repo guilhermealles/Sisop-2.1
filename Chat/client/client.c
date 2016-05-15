@@ -53,10 +53,7 @@ int main (int argc, char **argv){
 
 	printf("Welcome to Earth chat!!!\n");
 	requestRegister();
-	requestRoomList();
-
 	userActions();
-
 
 	pthread_join(thread, NULL);
 }
@@ -71,7 +68,8 @@ void userActions(){
 	printf("*2 - leave a room chat\n");
 	printf("*3 - create a room chat\n");
 	printf("*4 - change nickname\n");
-	printf("*5 - exit from Earth chat\n");
+	printf("*5 - list rooms\n");
+	printf("*6 - exit from Earth chat\n");
 
 
 	while(in){
@@ -79,21 +77,24 @@ void userActions(){
 		if(text[0] == '*'){
 			switch(text[1]){
 				case '1':
-					printf("join room - insere um numero \n");
+					printf("** Join room **\n");
 					joinRoom();
 					break;
 				case '2':
-					printf("leave room \n");
+					printf("** Leave room **\n");
 					leaveRoom();
 					break;
 				case '3':
-					printf("create room - insere um numero\n");
+					printf("** Create room **\n");
 					createRoom();
 					break;
 				case '4':
 					setNick();
 					break;
 				case '5':
+					printf("** Request room list **\n");
+					requestRoomList();
+				case '6':
 					close(s);
 					exit(0);
 				default:
@@ -260,17 +261,23 @@ void requestRoomList(){
 	}
 
 	bzero(firstByte, 1);
-	while(firstByte[0] != 'S'){
+	do{
 		rec = read(s, firstByte, 1);
 		if(rec < 0){
 			printf("Erro na transmissao.\n");
 			close(s);
 			return;
 		}
+<<<<<<< HEAD
 
 	}
 	rec = read(s, pack_lenght, 4);
+=======
+	
+	}while(firstByte[0] != 'S');
+>>>>>>> 35343db16f7f4fdf3648c427c8121e7833d21dc4
 
+	rec = read(s, pack_lenght, 4);
 	if(rec < 0){
 		printf("Erro na transmissao.\n");
 		close(s);
@@ -308,7 +315,7 @@ void leaveRoom(){
 		}
 	}
 
-	requestRoomList();
+	printf("You're already outside the room.\n");
 }
 
 void joinRoom(){
@@ -421,6 +428,13 @@ void requestRegister(){
 		printf("Erro na transmissão\n");
 		close(s);
 		return;
+	}
+
+	if(readServerResponse(0)){
+		printf("You are registered.\n");
+	}else{
+		printf("Error: error to register, probably your nick already exists.\n");
+		requestRegister();
 	}
 
 }
