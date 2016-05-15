@@ -12,12 +12,12 @@
 
 // List of all possible "tags"
 #define SERVER_REPLY 'R'
-#define CLIENT_REGISTER 'C'
+#define CLIENT_REGISTER 'C' // ok
 #define LIST_ROOMS 'L'
-#define JOIN_ROOM 'J'
+#define JOIN_ROOM 'J' // ok
 #define MESSAGE_TO_ROOM 'M'
-#define LEAVE_ROOM 'Q'
-#define SET_NICK 'N'
+#define LEAVE_ROOM 'Q' //ok
+#define SET_NICK 'N' // ok
 
 typedef struct chatRoom {
     unsigned int    roomId;

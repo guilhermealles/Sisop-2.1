@@ -7,6 +7,7 @@
 #include <pthread.h>
 #include "../interface.h"
 #include "client.h"
+#include "messagehandler.h"
 
 #define MAX_SIMULT_CONN 20
 #define READ_BUFFER_SIZE 1024
@@ -122,15 +123,18 @@ void* connection_thread(void* args) {
 	// Switch the packet to the correct message, and treat accordingly
 	void *message;
 	switch(buffer[0]) {
-		case SET_NICK:
-			message = malloc(sizeof(NICK_MESSAGE));
-			NICK_MESSAGE *received_message = (NICK_MESSAGE*) message;
-			memcpy(received_message, buffer, sizeof(NICK_MESSAGE));
-			// serverResponse = changenick();
-
-			// TODO FREE received_message!!!!!
+		case CLIENT_REGISTER:
+			serverResponse = handleRegisterClient(buffer);
 			break;
-
+		case SET_NICK:
+			serverResponse = handleChangeNick(buffer);
+			break;
+		case JOIN_ROOM:
+			serverResponse = handleChangeRoom(buffer);
+			break;
+		case LEAVE_ROOM:
+			serverResponse = handleLeaveRoom(buffer);
+			break;
 		/*
 		 * TODO Add other cases
 		 */
