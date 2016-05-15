@@ -3,6 +3,7 @@
 #include <string.h>
 #include <pthread.h>
 #include "room.h"
+#include "../interface.h"
 
 unsigned int registeredRoomsCount;
 unsigned int roomsArraySize;
@@ -27,5 +28,15 @@ int createChatRoom (char *name) {
         free(roomsArray);
         roomsArray = tmpArray;
     }
-    
+    CHAT_ROOM *newRoom = malloc(sizeof(CHAT_ROOM));
+    newRoom->roomId = registeredRoomsCount;
+    strcpy(newRoom->roomName, name);
+
+    roomsArray[registeredRoomsCount] = *newRoom;
+    free(newRoom);
+    int returnValue = registeredRoomsCount;
+    registeredRoomsCount++;
+
+    pthread_mutex_unlock(&roomsMutex);
+    return returnValue;
 }

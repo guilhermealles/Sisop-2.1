@@ -5,6 +5,7 @@
 #define SERVER_PORT 3010
 #define MAX_CLIENTS_PER_ROOM 30
 #define MAX_NICK_LENGTH 31
+#define MAX_ROOM_NAME_LENGTH 51
 
 // Possible server responses
 #define SERV_REPLY_OK 1
@@ -21,13 +22,13 @@
 
 typedef struct client {
     unsigned int    clientId;
-    char            nick[31];
+    char            nick[MAX_NICK_LENGTH];
     unsigned int    chatRoom;
 } CLIENT;
 
 typedef struct chatRoom {
     unsigned int    roomId;
-    char*           roomName;
+    char            roomName[MAX_ROOM_NAME_LENGTH];
     unsigned int    connectedClientIds[MAX_CLIENTS_PER_ROOM];
 } CHAT_ROOM;
 
