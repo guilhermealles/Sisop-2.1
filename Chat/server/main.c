@@ -22,6 +22,7 @@ int main (int argc, char **argv) {
 	printf("Initializing server...\n");
 	initializeClientsManager();
 	initializeRoomsManager();
+	initializeMessageHandler();
 	printf("Creating connection socket...\n");
 	// Try to open connection socket
 	connectionSocket = socket(AF_INET, SOCK_STREAM, 0);

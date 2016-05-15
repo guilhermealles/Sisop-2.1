@@ -40,3 +40,12 @@ int createChatRoom (char *name) {
     pthread_mutex_unlock(&roomsMutex);
     return returnValue;
 }
+
+int existsRoomWithId(int roomId) {
+    pthread_mutex_lock(&roomsMutex);
+
+    int result = (roomId < registeredRoomsCount);
+
+    pthread_mutex_unlock(&roomsMutex);
+    return result;
+}

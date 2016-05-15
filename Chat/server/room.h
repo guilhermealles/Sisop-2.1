@@ -7,8 +7,6 @@
 
 void initializeRoomsManager();
 int createChatRoom(char *name);
-int destroyChatRoom(int roomId);
-int clientLeaveRoom(char *name, int roomId);
-int clientJoinRoom(int clientId, int roomId);
+int existsRoomWithId(int roomId);
 
 #endif
