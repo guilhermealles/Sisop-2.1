@@ -65,3 +65,40 @@ int handleCreateRoom(char *buffer) {
     printf("[THREAD] Created new room:\n\t\tRoom ID: %d\n\t\tRoom Name: %s\n\t\tCreator ID: %d.\n", newRoom, message->roomName, message->clientId);
     return SERV_REPLY_OK;
 }
+
+int handleMessageToRoom(char *buffer) {
+    MESSAGE *message = (MESSAGE*) buffer;
+    extern CLIENT *clientsArray;
+    extern unsigned int registeredClientsCount;
+    if (message->clientId >= registeredClientsCount) {
+        fprintf(stderr, "[THREAD] Error when sending message: sender id %d not valid!\n", message->clientId);
+        return SERV_REPLY_FAIL;
+    }
+    strcpy(message->senderNick, clientsArray[message->clientId].nick);
+
+    SOCKET messageSender;
+    int i;
+    for(i=0; i<registeredClientsCount; i++) {
+        if (clientsArray[i].chatRoom == message->roomId) {
+            // Send the message to this client.
+            if ((messageSender = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
+                fprintf(stderr, "[THREAD] Error when creating socket to send message.\n");
+                return SERV_REPLY_FAIL;
+            }
+            struct sockaddr address = clientsArray[i].clientAddress;
+            if (connect(messageSender, (struct sockaddr*) &address, sizeof(address)) != 0) {
+                fprintf(stderr, "[THREAD] Error when connecting socket to client.\n");
+                close(messageSender);
+                return SERV_REPLY_FAIL;
+            }
+            int confirm = write(messageSender, message, sizeof(MESSAGE));
+            if (confirm < 0) {
+                fprintf(stderr, "[THREAD] Error when writing message to socket.\n");
+                close(messageSender);
+                return SERV_REPLY_FAIL;
+            }
+            close(messageSender);
+        }
+    }
+    return SERV_REPLY_OK;
+}

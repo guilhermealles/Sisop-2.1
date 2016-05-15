@@ -9,5 +9,6 @@ int handleChangeRoom(char *buffer);
 int handleLeaveRoom(char *buffer);
 int handleCreateRoom(char *buffer);
 int handleListRoom(char *buffer);
+int handleMessageToRoom(char *buffer);
 
 #endif

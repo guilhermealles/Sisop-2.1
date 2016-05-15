@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <arpa/inet.h>
 #include "../interface.h"
 #include "client.h"
 #include "room.h"
@@ -43,7 +44,7 @@ int registerNewClient(char *nick, struct sockaddr clientAddress) {
     newClient->clientId = registeredClientsCount;
     strcpy(newClient->nick, nick);
     struct sockaddr_in *casted = (struct sockaddr_in*) &clientAddress;
-    casted->sin_port = PORTA_CLI;
+    casted->sin_port = htons(PORTA_CLI);
     newClient->clientAddress = clientAddress;
 
     clientsArray[registeredClientsCount] = *newClient;

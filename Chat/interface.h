@@ -43,6 +43,7 @@ typedef struct message {
     char            tag;
     unsigned int    size;
     unsigned int    clientId;
+    char            senderNick[MAX_NICK_LENGTH];
     unsigned int    roomId;
     char            messageText[MAX_MESSAGE_LENGTH];
 	char 			nick[MAX_NICK_LENGTH];
