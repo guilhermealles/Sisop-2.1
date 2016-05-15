@@ -6,6 +6,7 @@
 #define MAX_CLIENTS_PER_ROOM 30
 #define MAX_NICK_LENGTH 31
 #define MAX_ROOM_NAME_LENGTH 51
+#define MAX_MESSAGE_LENGTH 1000
 
 // Possible server responses
 #define SERV_REPLY_OK 1

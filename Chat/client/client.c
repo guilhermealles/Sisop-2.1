@@ -63,8 +63,8 @@ int main (int argc, char **argv){
 
 void userActions(){
 
-	char bar, num;
-	int in = 1;
+	char text[MAX_MESSAGE_LENGTH];
+	int in = 1, confirm;
 
 	printf("Commands: \n");
 	printf("*1 - join into a room chat\n");
@@ -75,9 +75,9 @@ void userActions(){
 
 
 	while(in){
-		scanf("%c%c",&bar,&num);
-		if(bar == '*'){
-			switch(num){
+		scanf("%s",text);
+		if(text[0] == '*'){
+			switch(text[1]){
 				case '1':
 					printf("join room - insere um numero \n");
 					joinRoom();
@@ -98,11 +98,25 @@ void userActions(){
 					exit(0);
 				default:
 					break;
-			}
+			}		
 		}else{
 			if(enableToWrite){
-				//TODO:
 
+				MESSAGE *message = malloc(sizeof(MESSAGE));
+				message->clientId = ID;
+				message->tag = MESSAGE_TO_ROOM;
+				message->size = strlen(text) + sizeof(int) + sizeof(int);
+				message->roomId = selectedRoom;
+				strcpy(message->messageText, text);
+
+				// envia para o servidor
+				confirm = write(s, message, sizeof(MESSAGE));
+				if (confirm < 0){
+					printf("Erro na transmissão\n");
+					close(s);
+					return;
+				}
+				printf("mensagem enviada \n");
 			}
 		}
 	}
