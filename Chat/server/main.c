@@ -148,8 +148,10 @@ void* connection_thread(void* args) {
 		}
 
 		int serverResponse = SERV_REPLY_FAIL;
+		int servListRooms=0;
 		extern pthread_mutex_t handlerMutex;
 		extern int registeredClientsCount;
+		extern int registeredRoomsCount;
 		// Start building the response
 		SERVER_RESPONSE *response = malloc(sizeof(SERVER_RESPONSE));
 		response->tag = SERVER_REPLY;
@@ -158,11 +160,8 @@ void* connection_thread(void* args) {
 		switch(buffer[0]) {
 			case CLIENT_REGISTER:
 				pthread_mutex_lock(&handlerMutex);
-				printf("[DEBUG] 1\n");
 				serverResponse = handleRegisterClient(buffer);
-				printf("[DEBUG] 2\n");
 				sprintf(response->message, "%d", (registeredClientsCount-1));
-				printf("[DEBUG] 3\n");
 				pthread_mutex_unlock(&handlerMutex);
 				break;
 			case SET_NICK:
@@ -187,7 +186,15 @@ void* connection_thread(void* args) {
 				break;
 			case LIST_ROOMS:
 				pthread_mutex_lock(&handlerMutex);
-				//handle
+				servListRooms = 1;
+				if ((registeredRoomsCount*sizeof(CHAT_ROOM)) >= READ_BUFFER_SIZE) {
+					strcpy(response->message, "Server Error: Number of rooms is too big for message buffer.\n");
+					serverResponse = SERV_REPLY_FAIL;
+				}
+				else {
+					sprintf(response->message, "%d", (registeredRoomsCount));
+					serverResponse = SERV_REPLY_OK;
+				}
 				pthread_mutex_unlock(&handlerMutex);
 				break;
 			case MESSAGE_TO_ROOM:
@@ -206,7 +213,29 @@ void* connection_thread(void* args) {
 		int confirm = write(messageSocket, response, sizeof(SERVER_RESPONSE));
 		if (confirm < 0) {
 			fprintf(stderr, "[THREAD] Error sending reply to client");
+			close(messageSocket);
 			exit(EXIT_FAILURE);
+		}
+
+		if (servListRooms) {
+			extern CHAT_ROOM* roomsArray;
+			pthread_mutex_lock(&handlerMutex);
+
+			memset(buffer, 0, sizeof(char)*READ_BUFFER_SIZE);
+			if ((registeredRoomsCount*sizeof(CHAT_ROOM)>READ_BUFFER_SIZE)) {
+				fprintf(stderr, "[THREAD] Error: number of rooms is too large!!\n");
+			}
+			else {
+				memcpy(buffer, (void*)roomsArray, (registeredRoomsCount*sizeof(CHAT_ROOM)));
+			}
+			pthread_mutex_unlock(&handlerMutex);
+
+			int confirm = write(messageSocket, buffer, (registeredRoomsCount*sizeof(CHAT_ROOM)));
+			if (confirm < 0) {
+				fprintf(stderr, "[THREAD] Error sending rooms list to client.\n");
+				close(messageSocket);
+				exit(EXIT_FAILURE);
+			}
 		}
 	}
 

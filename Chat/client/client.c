@@ -13,11 +13,14 @@
 #define BUFF 1024
 #define IP_SERVIDOR "127.0.0.1"
 #define PORTA_CLI 2345
+#define CHECK_RESPONSE 0
+#define SAVE_CLIENT_ID 1
+#define SAVE_NUMBER_OF_ROOMS 2
 
 void connectToServer();
 void setNick();
 void socketReceiver();
-void printRooms(int size);
+void printRooms();
 void userActions();
 void joinRoom();
 void leaveRoom();
@@ -35,7 +38,7 @@ int porta_cli;
 char nick[MAX_NICK_LENGTH];
 char byteInicio;
 char *receiveBuffer;
-int number_of_rooms;
+int number_of_rooms = 0;
 int selectedRoom = 0;
 int enableToWrite = 0;
 
@@ -94,6 +97,7 @@ void userActions(){
 				case '5':
 					printf("** Request room list **\n");
 					requestRoomList();
+					break;
 				case '6':
 					close(s);
 					exit(0);
@@ -180,9 +184,13 @@ int readServerResponse(int id){
 	SERVER_RESPONSE *response = (SERVER_RESPONSE *)buffer;
 	if (response->tag == SERVER_REPLY) {
 		if (response->response == SERV_REPLY_OK) {
-			if (id == 1) {
+			if (id == SAVE_CLIENT_ID) {
 				ID = (int) strtol(response->message, NULL, 10);
 				printf("Reply from server:\n\tID: %d.\n", ID);
+			}
+			else if (id == SAVE_NUMBER_OF_ROOMS) {
+				number_of_rooms = (int) strtol(response->message, NULL, 10);
+				printf("Reply from server:\n\tNumber of rooms: %d.\n", number_of_rooms);
 			}
 			return 1;
 		}
@@ -224,7 +232,7 @@ void createRoom(){
 	create_message->tag = CREATE_ROOM;
 	create_message->size = package_length;
 	strcpy(create_message->roomName, roomName);
-	//TODO adicionar o ID do cliente no pacote
+	create_message->clientId = ID;
 
 	// envia para o servidor
 	confirm = write(s, create_message, sizeof(CREATE_ROOM_MESSAGE));
@@ -234,7 +242,7 @@ void createRoom(){
 		return;
 	}
 
-	if(readServerResponse(0)){
+	if(readServerResponse(CHECK_RESPONSE)){
 		printf("Room created successfully.\n");
 	}
 }
@@ -258,28 +266,13 @@ void requestRoomList(){
 		close(s);
 		return;
 	}
-
-	bzero(firstByte, 1);
-	do{
-		rec = read(s, firstByte, 1);
-		if(rec < 0){
-			printf("Erro na transmissao.\n");
-			close(s);
-			return;
-		}
-
-	} while(firstByte[0] != 'S');
-
-	rec = read(s, pack_lenght, 4);
-	if(rec < 0){
-		printf("Erro na transmissao.\n");
+	if (readServerResponse(SAVE_NUMBER_OF_ROOMS) == 0) {
+		fprintf(stderr, "Erro ao ler resposta do servidor.\n");
 		close(s);
 		return;
 	}
 
-	convert_pack_lenght = *((int*)pack_lenght);
-
-	printRooms(convert_pack_lenght);
+	printRooms();
 }
 
 void leaveRoom(){
@@ -302,7 +295,7 @@ void leaveRoom(){
 			return;
 		}
 
-		if(readServerResponse(0)){
+		if(readServerResponse(CHECK_RESPONSE)){
 			printf("You left the room successfully.\n");
 			enableToWrite = 0;
 		}
@@ -343,8 +336,8 @@ void joinRoom(){
 			return;
 		}
 
-		if(readServerResponse(0)){
-			printf("You entered into the room.\n");
+		if(readServerResponse(CHECK_RESPONSE)){
+			printf("You entered in the room.\n");
 			enableToWrite = 1;
 		}
 	}else{
@@ -354,39 +347,23 @@ void joinRoom(){
 
 }
 
-void printRooms(int size){
-
-	int confirm, i, ind = 1;
-	char buffer[size];
-	char room_name[MAX_ROOM_NAME_LENGTH];
-
-	bzero(buffer, size);
-	confirm = read(s, buffer, size);
-
-	if (confirm < 0) {
-	  perror("ERROR reading from socket");
-	  exit(1);
+void printRooms(){
+	char buffer[BUFF];
+	printf("Number of rooms: %d.\n", number_of_rooms);
+	int bytes_read = 0;
+	while (bytes_read < (sizeof(CHAT_ROOM)*number_of_rooms)) {
+		int current_bytes_read = read(s, &buffer[bytes_read], sizeof(CHAT_ROOM));
+		bytes_read += current_bytes_read;
 	}
+	// Here all the rooms should have already been read
 
-	// pega o byte que indica o numero de salas
-	number_of_rooms = (int) strtol(&buffer[0], NULL, 10);
-	printf("Numero de salas: %d\n", number_of_rooms);
+	int i=0;
+	for(i=0; i<number_of_rooms; i++) {
+		unsigned int buffer_offset = i * sizeof(CHAT_ROOM);
+		CHAT_ROOM *room = (CHAT_ROOM*) &buffer[buffer_offset];
 
-	chat_room = (CHAT_ROOM*) malloc(size * sizeof(CHAT_ROOM));
-
-    for (i=0; i < number_of_rooms; i++) {
-		// guarda id da sala
-		chat_room[i].roomId = buffer[ind] - '0';
-
-		// seleciona os 21 bytes do buffer referentes ao nome - incluindo \0
-		memcpy(room_name, &buffer[ind + 1 ], MAX_ROOM_NAME_LENGTH);
-		strcpy(chat_room[i].roomName, room_name);
-
-		printf("%d - %s\n", chat_room[i].roomId, chat_room[i].roomName);
-
-		ind+= MAX_ROOM_NAME_LENGTH+1;
+		printf("\tRoom %d - %s\n", room->roomId, room->roomName);
 	}
-
 }
 
 void requestRegister(){
@@ -424,7 +401,7 @@ void requestRegister(){
 	}
 
 
-	if(readServerResponse(1)){
+	if(readServerResponse(SAVE_CLIENT_ID)){
 		printf("You are registered.\n");
 	}else{
 		printf("Error: error to register, probably your nick already exists.\n");
