@@ -98,7 +98,7 @@ void userActions(){
 					exit(0);
 				default:
 					break;
-			}		
+			}
 		}else{
 			if(enableToWrite){
 
@@ -267,7 +267,7 @@ void requestRoomList(){
 			close(s);
 			return;
 		}
-	
+
 	}
 	rec = read(s, pack_lenght, 4);
 
@@ -276,8 +276,8 @@ void requestRoomList(){
 		close(s);
 		return;
 	}
-	
-	convert_pack_lenght = *((int*)pack_lenght);	
+
+	convert_pack_lenght = *((int*)pack_lenght);
 
 	printRooms(convert_pack_lenght);
 }

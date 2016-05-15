@@ -90,104 +90,106 @@ void* connection_thread(void* args) {
 
 	char buffer[READ_BUFFER_SIZE];
 
-	// Fill buffer with zeros
-	memset(buffer, 0, sizeof(char)*READ_BUFFER_SIZE);
-	int bytesRead = 0;
-	while (bytesRead < 1) {
-		// Try to read at least first byte (containing the tag)
-		int currentBytesRead = read(messageSocket, &buffer[bytesRead], READ_BUFFER_SIZE);
-		bytesRead += currentBytesRead;
-	}
-	int bytesToRead=0;
-	switch(buffer[0]) {
-		case CLIENT_REGISTER:
-			bytesToRead = sizeof(REQUEST_REGISTER) - bytesRead;
-			printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(REQUEST_REGISTER), bytesRead);
-			break;
-		case SET_NICK:
-			bytesToRead = sizeof(NICK_MESSAGE) - bytesRead;
-			printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(NICK_MESSAGE), bytesRead);
-			break;
-		case JOIN_ROOM:
-			bytesToRead = sizeof(JOIN_MESSAGE) - bytesRead;
-			printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(JOIN_MESSAGE), bytesRead);
-			break;
-		case LEAVE_ROOM:
-			bytesToRead = sizeof(LEAVE_MESSAGE) - bytesRead;
-			printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(LEAVE_MESSAGE), bytesRead);
-			break;
-		case CREATE_ROOM:
-			bytesToRead = sizeof(CREATE_ROOM_MESSAGE) - bytesRead;
-			printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(CREATE_ROOM_MESSAGE), bytesRead);
-			break;
-		case LIST_ROOMS:
-			bytesToRead = sizeof(REQUEST_ROOM_MESSAGE) - bytesRead;
-			printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(REQUEST_ROOM_MESSAGE), bytesRead);
-			break;
-		case MESSAGE_TO_ROOM:
-			bytesToRead = sizeof(MESSAGE) - bytesRead;
-			printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(MESSAGE), bytesRead);
-			break;
-		 default:
-		 	fprintf(stderr, "[THREAD] Error: unrecognized tag \"%c\".\n", buffer[0]);
-			close(messageSocket);
-			exit(EXIT_FAILURE);
-			break;
-	}
-	if (bytesToRead < 0) {
-		fprintf(stderr, "[THREAD] Warning: bytesToRead is less than 0 (value %d)!\n", bytesToRead);
-		//close(messageSocket);
-		//exit(EXIT_FAILURE);
-	}
-	// Read the remaining part of the packet (if any)
-	while (bytesToRead != 0) {
-		int currentBytesRead = read(messageSocket, &buffer[bytesRead], bytesToRead);
-		bytesRead += currentBytesRead;
-		bytesToRead -= currentBytesRead;
-	}
+	while(1) {
+		// Fill buffer with zeros
+		memset(buffer, 0, sizeof(char)*READ_BUFFER_SIZE);
+		int bytesRead = 0;
+		while (bytesRead < 1) {
+			// Try to read at least first byte (containing the tag)
+			int currentBytesRead = read(messageSocket, &buffer[bytesRead], READ_BUFFER_SIZE);
+			bytesRead += currentBytesRead;
+		}
+		int bytesToRead=0;
+		switch(buffer[0]) {
+			case CLIENT_REGISTER:
+				bytesToRead = sizeof(REQUEST_REGISTER) - bytesRead;
+				printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(REQUEST_REGISTER), bytesRead);
+				break;
+			case SET_NICK:
+				bytesToRead = sizeof(NICK_MESSAGE) - bytesRead;
+				printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(NICK_MESSAGE), bytesRead);
+				break;
+			case JOIN_ROOM:
+				bytesToRead = sizeof(JOIN_MESSAGE) - bytesRead;
+				printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(JOIN_MESSAGE), bytesRead);
+				break;
+			case LEAVE_ROOM:
+				bytesToRead = sizeof(LEAVE_MESSAGE) - bytesRead;
+				printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(LEAVE_MESSAGE), bytesRead);
+				break;
+			case CREATE_ROOM:
+				bytesToRead = sizeof(CREATE_ROOM_MESSAGE) - bytesRead;
+				printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(CREATE_ROOM_MESSAGE), bytesRead);
+				break;
+			case LIST_ROOMS:
+				bytesToRead = sizeof(REQUEST_ROOM_MESSAGE) - bytesRead;
+				printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(REQUEST_ROOM_MESSAGE), bytesRead);
+				break;
+			case MESSAGE_TO_ROOM:
+				bytesToRead = sizeof(MESSAGE) - bytesRead;
+				printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(MESSAGE), bytesRead);
+				break;
+			 default:
+			 	fprintf(stderr, "[THREAD] Error: unrecognized tag \"%c\".\n", buffer[0]);
+				close(messageSocket);
+				exit(EXIT_FAILURE);
+				break;
+		}
+		if (bytesToRead < 0) {
+			fprintf(stderr, "[THREAD] Warning: bytesToRead is less than 0 (value %d)!\n", bytesToRead);
+			//close(messageSocket);
+			//exit(EXIT_FAILURE);
+		}
+		// Read the remaining part of the packet (if any)
+		while (bytesToRead != 0) {
+			int currentBytesRead = read(messageSocket, &buffer[bytesRead], bytesToRead);
+			bytesRead += currentBytesRead;
+			bytesToRead -= currentBytesRead;
+		}
 
-	int serverResponse = SERV_REPLY_FAIL;
-	// Switch the packet to the correct message, and treat accordingly
-	switch(buffer[0]) {
-		case CLIENT_REGISTER:
-			serverResponse = handleRegisterClient(buffer);
-			break;
-		case SET_NICK:
-			serverResponse = handleChangeNick(buffer);
-			break;
-		case JOIN_ROOM:
-			serverResponse = handleChangeRoom(buffer);
-			break;
-		case LEAVE_ROOM:
-			serverResponse = handleLeaveRoom(buffer);
-			break;
-		case CREATE_ROOM:
-			serverResponse = handleCreateRoom(buffer);
-			break;
-		case LIST_ROOMS:
-			//handle
-			break;
-		case MESSAGE_TO_ROOM:
-			//handle
-			break;
-		 default:
-		 	fprintf(stderr, "[THREAD] Error: unrecognized tag \"%c\".\n", buffer[0]);
-			exit(EXIT_FAILURE);
-			break;
-	}
+		int serverResponse = SERV_REPLY_FAIL;
+		// Switch the packet to the correct message, and treat accordingly
+		switch(buffer[0]) {
+			case CLIENT_REGISTER:
+				serverResponse = handleRegisterClient(buffer);
+				break;
+			case SET_NICK:
+				serverResponse = handleChangeNick(buffer);
+				break;
+			case JOIN_ROOM:
+				serverResponse = handleChangeRoom(buffer);
+				break;
+			case LEAVE_ROOM:
+				serverResponse = handleLeaveRoom(buffer);
+				break;
+			case CREATE_ROOM:
+				serverResponse = handleCreateRoom(buffer);
+				break;
+			case LIST_ROOMS:
+				//handle
+				break;
+			case MESSAGE_TO_ROOM:
+				//handle
+				break;
+			 default:
+			 	fprintf(stderr, "[THREAD] Error: unrecognized tag \"%c\".\n", buffer[0]);
+				exit(EXIT_FAILURE);
+				break;
+		}
 
-	// Send response to client
-	SERVER_RESPONSE *response = malloc(sizeof(SERVER_RESPONSE));
-	response->tag = SERVER_REPLY;
-	response->response = serverResponse;
-	int confirm = write(messageSocket, response, sizeof(SERVER_RESPONSE));
-	if (confirm < 0) {
-		fprintf(stderr, "[THREAD] Error sending reply to client");
-		exit(EXIT_FAILURE);
+		// Send response to client
+		SERVER_RESPONSE *response = malloc(sizeof(SERVER_RESPONSE));
+		response->tag = SERVER_REPLY;
+		response->response = serverResponse;
+		int confirm = write(messageSocket, response, sizeof(SERVER_RESPONSE));
+		if (confirm < 0) {
+			fprintf(stderr, "[THREAD] Error sending reply to client");
+			exit(EXIT_FAILURE);
+		}
 	}
 
 	// Close the socket and free allocated memory
-	close(messageSocket);
+	//close(messageSocket);
 	//free(messageSocket_p);
 	//free(clientAddr_p);
 	//free(response);
