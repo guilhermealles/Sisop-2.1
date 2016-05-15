@@ -259,7 +259,7 @@ void requestRoomList(){
 	}
 
 	bzero(firstByte, 1);
-	while(firstByte[0] != 'S'){
+	do{
 		rec = read(s, firstByte, 1);
 		if(rec < 0){
 			printf("Erro na transmissao.\n");
@@ -267,7 +267,8 @@ void requestRoomList(){
 			return;
 		}
 	
-	}
+	}while(firstByte[0] != 'S');
+
 	rec = read(s, pack_lenght, 4);
 
 	if(rec < 0){
