@@ -1,8 +1,8 @@
 CC=gcc
 CFLAGS=-Wall
 
-INCLUDES=
-OBJECTS=main.o
+INCLUDES=client.c messagehandler.c room.c
+OBJECTS=main.o client.o messagehandler.o room.o
 BINARY=server
 
 all: ${OBJECTS} ${INCLUDES}

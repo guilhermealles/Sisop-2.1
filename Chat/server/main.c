@@ -7,6 +7,7 @@
 #include <pthread.h>
 #include "../interface.h"
 #include "client.h"
+#include "room.h"
 #include "messagehandler.h"
 
 #define MAX_SIMULT_CONN 20
@@ -19,7 +20,8 @@ int main (int argc, char **argv) {
 	struct sockaddr_in servAddr;
 
 	printf("Initializing server...\n");
-	initialzieClientsManager();
+	initializeClientsManager();
+	initializeRoomsManager();
 	printf("Creating connection socket...\n");
 	// Try to open connection socket
 	connectionSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -121,7 +123,6 @@ void* connection_thread(void* args) {
 
 	int serverResponse = SERV_REPLY_FAIL;
 	// Switch the packet to the correct message, and treat accordingly
-	void *message;
 	switch(buffer[0]) {
 		case CLIENT_REGISTER:
 			serverResponse = handleRegisterClient(buffer);

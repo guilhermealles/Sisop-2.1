@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "../interface.h"
 #include "client.h"
 
 unsigned int registeredClientsCount;
@@ -27,12 +28,12 @@ int registerNewClient(char *nick) {
         free(clientsArray);
         clientsArray = tmpArray;
     }
-    CLIENT *new_client = malloc(sizeof(CLIENT));
-    new_client->id = registeredClientsCount;
-    strcpy(new_client->nick, nick);
+    CLIENT *newClient = malloc(sizeof(CLIENT));
+    newClient->clientId = registeredClientsCount;
+    strcpy(newClient->nick, nick);
 
-    clientsArray[registeredClientsCount] = *new_client;
-    free(new_client);
+    clientsArray[registeredClientsCount] = *newClient;
+    free(newClient);
     int returnValue = registeredClientsCount;
     registeredClientsCount++;
 
@@ -53,14 +54,14 @@ int changeClientNick(int clientId, char *newNick) {
         pthread_mutex_unlock(&clientsMutex);
         return -1;
     }
-    strcpy(clientsArray[clientId]->nick, newNick);
+    strcpy(clientsArray[clientId].nick, newNick);
 
     pthread_mutex_unlock(&clientsMutex);
     return clientId;
 }
 
 // Returns the client Id, -1 if any errors occur
-int changeClientRoom(int clientId, unsigned int newRom) {
+int changeClientRoom(int clientId, unsigned int newRoom) {
     pthread_mutex_lock(&clientsMutex);
 
     if (clientId >= registeredClientsCount) {

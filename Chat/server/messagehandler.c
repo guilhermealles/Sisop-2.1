@@ -1,8 +1,9 @@
+#include <stdio.h>
 #include "../interface.h"
-#include "client.h";
+#include "client.h"
 
 int handleRegisterClient(char *buffer) {
-
+    return 0;
 }
 
 int handleChangeNick(char *buffer) {
@@ -18,7 +19,7 @@ int handleChangeRoom(char *buffer) {
     JOIN_MESSAGE *message = (JOIN_MESSAGE*) buffer;
     if (changeClientRoom(message->clientId, message->room) != message->clientId) {
         fprintf(stderr, "[THREAD] Error when moving client %d to room %d!.\n", message->clientId, message->room);
-        return SERV_REPLY_FAIL
+        return SERV_REPLY_FAIL;
     }
     return SERV_REPLY_OK;
 }
