@@ -148,7 +148,7 @@ void* connection_thread(void* args) {
 		}
 
 		int serverResponse = SERV_REPLY_FAIL;
-		int servListRooms=0;
+		int servListRooms=0, messageToRoom=0;
 		extern pthread_mutex_t handlerMutex;
 		extern int registeredClientsCount;
 		extern int registeredRoomsCount;
@@ -160,7 +160,7 @@ void* connection_thread(void* args) {
 		switch(buffer[0]) {
 			case CLIENT_REGISTER:
 				pthread_mutex_lock(&handlerMutex);
-				serverResponse = handleRegisterClient(buffer);
+				serverResponse = handleRegisterClient(buffer, clientAddr);
 				sprintf(response->message, "%d", (registeredClientsCount-1));
 				pthread_mutex_unlock(&handlerMutex);
 				break;
@@ -199,7 +199,7 @@ void* connection_thread(void* args) {
 				break;
 			case MESSAGE_TO_ROOM:
 				pthread_mutex_lock(&handlerMutex);
-				//handle
+				messageToRoom=1;
 				pthread_mutex_unlock(&handlerMutex);
 				break;
 			 default:
@@ -229,7 +229,7 @@ void* connection_thread(void* args) {
 				memcpy(buffer, (void*)roomsArray, (registeredRoomsCount*sizeof(CHAT_ROOM)));
 			}
 			pthread_mutex_unlock(&handlerMutex);
-
+			servListRooms = 0;
 			int confirm = write(messageSocket, buffer, (registeredRoomsCount*sizeof(CHAT_ROOM)));
 			if (confirm < 0) {
 				fprintf(stderr, "[THREAD] Error sending rooms list to client.\n");

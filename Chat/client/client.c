@@ -12,7 +12,6 @@
 #define SERVER_PORT 3010
 #define BUFF 1024
 #define IP_SERVIDOR "127.0.0.1"
-#define PORTA_CLI 2345
 #define CHECK_RESPONSE 0
 #define SAVE_CLIENT_ID 1
 #define SAVE_NUMBER_OF_ROOMS 2
@@ -181,7 +180,7 @@ void socketReceiver(){
 		MESSAGE *message = (MESSAGE *)buffer;
 		if(message->roomId == selectedRoom){
 			printf("%s: %s\n", message->nick, message->messageText);
-	
+
 		}
 	}
 }
@@ -324,7 +323,7 @@ void leaveRoom(){
 	}else{
 		printf("You're already outside the room.\n");
 	}
-	
+
 }
 
 void joinRoom(){

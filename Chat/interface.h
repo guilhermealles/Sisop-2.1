@@ -1,8 +1,11 @@
 #ifndef INTERFACE_H
 #define INTERFACE_H
 
+#include <netinet/in.h>
+
 // Some constants
 #define SERVER_PORT 3010
+#define PORTA_CLI 2345
 #define MAX_CLIENTS_PER_ROOM 30
 #define MAX_NICK_LENGTH 31
 #define MAX_ROOM_NAME_LENGTH 51
@@ -27,6 +30,7 @@ typedef struct client {
     unsigned int    clientId;
     char            nick[MAX_NICK_LENGTH];
     unsigned int    chatRoom;
+    struct sockaddr clientAddress;
 } CLIENT;
 
 typedef struct chatRoom {
