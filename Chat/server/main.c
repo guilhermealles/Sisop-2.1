@@ -100,19 +100,39 @@ void* connection_thread(void* args) {
 	}
 	int bytesToRead=0;
 	switch(buffer[0]) {
+		case CLIENT_REGISTER:
+			bytesToRead = sizeof(REQUEST_REGISTER) - bytesRead;
+			printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(REQUEST_REGISTER), bytesRead);
+			break;
 		case SET_NICK:
 			bytesToRead = sizeof(NICK_MESSAGE) - bytesRead;
+			printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(NICK_MESSAGE), bytesRead);
 			break;
-		/*
-		 * TODO Add Other cases
-		 */
+		case JOIN_ROOM:
+			bytesToRead = sizeof(JOIN_MESSAGE) - bytesRead;
+			printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(JOIN_MESSAGE), bytesRead);
+			break;
+		case LEAVE_ROOM:
+			bytesToRead = sizeof(LEAVE_MESSAGE) - bytesRead;
+			printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(LEAVE_MESSAGE), bytesRead);
+			break;
+		case LIST_ROOMS:
+			bytesToRead = sizeof(REQUEST_ROOM_MESSAGE) - bytesRead;
+			printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(REQUEST_ROOM_MESSAGE), bytesRead);
+			break;
+		case MESSAGE_TO_ROOM:
+			bytesToRead = sizeof(MESSAGE) - bytesRead;
+			printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(MESSAGE), bytesRead);
+			break;
 		 default:
 		 	fprintf(stderr, "[THREAD] Error: unrecognized tag \"%c\".\n", buffer[0]);
+			close(messageSocket);
 			exit(EXIT_FAILURE);
 			break;
 	}
 	if (bytesToRead < 0) {
 		fprintf(stderr, "[THREAD] Error: bytesToRead is less than 0!\n");
+		close(messageSocket);
 		exit(EXIT_FAILURE);
 	}
 	// Read the remaining part of the packet (if any)
@@ -161,9 +181,9 @@ void* connection_thread(void* args) {
 
 	// Close the socket and free allocated memory
 	close(messageSocket);
-	free(messageSocket_p);
-	free(clientAddr_p);
-	free(response);
+	//free(messageSocket_p);
+	//free(clientAddr_p);
+	//free(response);
 
 	return 0;
 }

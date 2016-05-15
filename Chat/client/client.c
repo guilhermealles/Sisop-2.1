@@ -98,7 +98,7 @@ void userActions(){
 					exit(0);
 				default:
 					break;
-			}		
+			}
 		}else{
 			if(enableToWrite){
 				//TODO:
@@ -129,16 +129,16 @@ void socketReceiver(){
 	}
 
 	while(enableToWrite){
-		
+
 		bzero(firstByte, 0);
 		confirm = read(s, firstByte, 1);
-		
+
 		if (confirm < 0) {
 			  perror("ERROR reading from socket");
 			  exit(1);
 		}
-		
-	
+
+
 		if(firstByte[0] == MESSAGE_TO_ROOM){
 		//TODO:
 		}
@@ -160,9 +160,9 @@ int readServerResponse(int id){
 		  exit(1);
 		}
 	*/
-	
+
 	if(firstByte[0] == SERVER_REPLY){
-	
+
 		confirm = read(s, pack_response, 4);
 
 		if (confirm < 0) {
@@ -181,7 +181,7 @@ int readServerResponse(int id){
 		}
 	}
 	return 0;
-	
+
 }
 
 
@@ -327,7 +327,7 @@ void printRooms(int size){
 
 	int confirm, i, ind = 1;
 	char buffer[size];
-	char room_name[21];
+	char room_name[MAX_ROOM_NAME_LENGTH];
 
 	bzero(buffer, size);
 	confirm = read(s, buffer, size);
