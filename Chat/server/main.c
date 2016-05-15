@@ -141,35 +141,59 @@ void* connection_thread(void* args) {
 			//exit(EXIT_FAILURE);
 		}
 		// Read the remaining part of the packet (if any)
-		while (bytesToRead != 0) {
+		while (bytesToRead > 0) {
 			int currentBytesRead = read(messageSocket, &buffer[bytesRead], bytesToRead);
 			bytesRead += currentBytesRead;
 			bytesToRead -= currentBytesRead;
 		}
 
 		int serverResponse = SERV_REPLY_FAIL;
+		extern pthread_mutex_t handlerMutex;
+		extern int registeredClientsCount;
+		// Start building the response
+		SERVER_RESPONSE *response = malloc(sizeof(SERVER_RESPONSE));
+		response->tag = SERVER_REPLY;
+
 		// Switch the packet to the correct message, and treat accordingly
 		switch(buffer[0]) {
 			case CLIENT_REGISTER:
+				pthread_mutex_lock(&handlerMutex);
+				printf("[DEBUG] 1\n");
 				serverResponse = handleRegisterClient(buffer);
+				printf("[DEBUG] 2\n");
+				sprintf(response->message, "%d", (registeredClientsCount-1));
+				printf("[DEBUG] 3\n");
+				pthread_mutex_unlock(&handlerMutex);
 				break;
 			case SET_NICK:
+				pthread_mutex_lock(&handlerMutex);
 				serverResponse = handleChangeNick(buffer);
+				pthread_mutex_unlock(&handlerMutex);
 				break;
 			case JOIN_ROOM:
+				pthread_mutex_lock(&handlerMutex);
 				serverResponse = handleChangeRoom(buffer);
+				pthread_mutex_unlock(&handlerMutex);
 				break;
 			case LEAVE_ROOM:
+				pthread_mutex_lock(&handlerMutex);
 				serverResponse = handleLeaveRoom(buffer);
+				pthread_mutex_unlock(&handlerMutex);
 				break;
 			case CREATE_ROOM:
+				pthread_mutex_lock(&handlerMutex);
 				serverResponse = handleCreateRoom(buffer);
+				pthread_mutex_unlock(&handlerMutex);
 				break;
 			case LIST_ROOMS:
+				pthread_mutex_lock(&handlerMutex);
 				//handle
+				pthread_mutex_unlock(&handlerMutex);
 				break;
 			case MESSAGE_TO_ROOM:
+				pthread_mutex_lock(&handlerMutex);
 				//handle
+				pthread_mutex_unlock(&handlerMutex);
 				break;
 			 default:
 			 	fprintf(stderr, "[THREAD] Error: unrecognized tag \"%c\".\n", buffer[0]);
@@ -177,9 +201,7 @@ void* connection_thread(void* args) {
 				break;
 		}
 
-		// Send response to client
-		SERVER_RESPONSE *response = malloc(sizeof(SERVER_RESPONSE));
-		response->tag = SERVER_REPLY;
+		// Finish building response
 		response->response = serverResponse;
 		int confirm = write(messageSocket, response, sizeof(SERVER_RESPONSE));
 		if (confirm < 0) {

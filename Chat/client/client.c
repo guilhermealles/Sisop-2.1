@@ -161,42 +161,41 @@ void socketReceiver(){
 }
 
 int readServerResponse(int id){
-	int confirm;
-	char firstByte[1];
-	char pack_response[4], pack_id[4];
-	int convert_pack_lenght, response;
-
-	while(confirm < 0){
-		bzero(firstByte, 0);
-		confirm = read(s, firstByte, 1);
+	int bytes_read = 0;
+	char buffer[BUFF];
+	while (bytes_read < 1) {
+		// Read at least the first byte
+		int current_bytes_read = read(s, &buffer[bytes_read], BUFF);
+		bytes_read += current_bytes_read;
 	}
-	/*	if (confirm < 0) {
-		  perror("ERROR reading from socket");
-		  exit(1);
-		}
-	*/
 
-	if(firstByte[0] == SERVER_REPLY){
+	int bytes_to_read = sizeof(SERVER_RESPONSE) - bytes_read;
+	while (bytes_to_read > 0) {
+		int current_bytes_read = read(s, &buffer[bytes_read], bytes_to_read);
+		bytes_read += current_bytes_read;
+		bytes_to_read -= current_bytes_read;
+	}
+	// Here the message should be completely read
 
-		confirm = read(s, pack_response, 4);
-
-		if (confirm < 0) {
-		  perror("ERROR reading from socket");
-		  exit(1);
-		}
-		response = *((int*)pack_response);
-
-		if(response == SERV_REPLY_OK){
-			if(id == 1){
-				confirm = read(s, pack_id, 4);
-				ID = (int) strtol(pack_id, NULL, 10);
-				printf("id: %d\n", ID);
+	SERVER_RESPONSE *response = (SERVER_RESPONSE *)buffer;
+	if (response->tag == SERVER_REPLY) {
+		if (response->response == SERV_REPLY_OK) {
+			if (id == 1) {
+				ID = (int) strtol(response->message, NULL, 10);
+				printf("Reply from server:\n\tID: %d.\n", ID);
 			}
 			return 1;
 		}
+		else if (response->response == SERV_REPLY_FAIL) {
+			fprintf(stderr, "Error: Server responded FAILURE with message:\n\"%s\".\n", response->message);
+			return 0;
+		}
+		else {
+			fprintf(stderr, "Error: unrecognized response->response.\n");
+			return 0;
+		}
 	}
 	return 0;
-
 }
 
 
@@ -424,7 +423,8 @@ void requestRegister(){
 		return;
 	}
 
-	if(readServerResponse(0)){
+
+	if(readServerResponse(1)){
 		printf("You are registered.\n");
 	}else{
 		printf("Error: error to register, probably your nick already exists.\n");

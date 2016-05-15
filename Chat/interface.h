@@ -6,11 +6,12 @@
 #define MAX_CLIENTS_PER_ROOM 30
 #define MAX_NICK_LENGTH 31
 #define MAX_ROOM_NAME_LENGTH 51
+#define MAX_REPLY_MESSAGE_SIZE 101
 #define MAX_MESSAGE_LENGTH 1000
 
 // Possible server responses
 #define SERV_REPLY_OK 1
-#define SERV_REPLY_FAIL 0
+#define SERV_REPLY_FAIL -1
 
 // List of all possible "tags"
 #define SERVER_REPLY 'R' //ok
@@ -76,7 +77,7 @@ typedef struct requestRoomMessage {
 typedef struct serverResponse {
     char            tag;
     int             response;
-    char*           message;        // Em caso de erro, dá pra imprimir essa mensagem pro cliente...
+    char            message[MAX_REPLY_MESSAGE_SIZE];        // Em caso de erro, dá pra imprimir essa mensagem pro cliente...
 } SERVER_RESPONSE;
 
 typedef struct requestRegister{
