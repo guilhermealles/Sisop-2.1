@@ -12,7 +12,7 @@
 #define SERV_REPLY_FAIL 0
 
 // List of all possible "tags"
-#define SERVER_REPLY 'R'
+#define SERVER_REPLY 'R' //ok
 #define CLIENT_REGISTER 'C' // ok
 #define LIST_ROOMS 'L'
 #define JOIN_ROOM 'J' // ok
@@ -30,13 +30,14 @@ typedef struct client {
 typedef struct chatRoom {
     unsigned int    roomId;
     char            roomName[MAX_ROOM_NAME_LENGTH];
-    unsigned int    connectedClientIds[MAX_CLIENTS_PER_ROOM];
+
 } CHAT_ROOM;
 
 typedef struct message {
     char            tag;
     unsigned int    size;
     unsigned int    clientId;
+    unsigned int    roomId;
     char*           messageText;
 
 } MESSAGE;
@@ -80,7 +81,7 @@ typedef struct serverResponse {
 typedef struct requestRegister{
     char            tag;
     unsigned int    size;
-    char*           nick; 
+    char            nick[MAX_NICK_LENGTH];
 }REQUEST_REGISTER;
 
 typedef struct createRoomMessage{

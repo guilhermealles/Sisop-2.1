@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include "../interface.h"
 #include "client.h"
+#include "room.h"
 
 unsigned int registeredClientsCount;
 unsigned int clientsArraySize;
@@ -19,7 +20,7 @@ void initializeClientsManager() {
     pthread_mutex_init(&clientsMutex, NULL);
 }
 
-// Returns the ID of the new client
+// Returns the ID of the new client, -1 if error
 int registerNewClient(char *nick) {
     pthread_mutex_lock(&clientsMutex);
 
@@ -27,6 +28,16 @@ int registerNewClient(char *nick) {
         CLIENT *tmpArray = realloc(clientsArray, clientsArraySize+CLIENTS_ARRAY_STEP_SIZE);
         free(clientsArray);
         clientsArray = tmpArray;
+    }
+
+    // Check if nickname not used
+    int i=0;
+    for(i=0; i<registeredClientsCount; i++) {
+        if (strcmp(clientsArray[i].nick, nick) == 0) {
+            fprintf(stderr, "[THREAD] Error: nick %s already in use!\n", nick);
+            pthread_mutex_unlock(&clientsMutex);
+            return -1;
+        }
     }
     CLIENT *newClient = malloc(sizeof(CLIENT));
     newClient->clientId = registeredClientsCount;
@@ -49,7 +60,7 @@ int changeClientNick(int clientId, char *newNick) {
         pthread_mutex_unlock(&clientsMutex);
         return -1;
     }
-    if (strlen(newNick) >= 31) {
+    if (strlen(newNick) >= MAX_NICK_LENGTH) {
         fprintf(stderr, "[THREAD] Error: tried to change the nick of client %d. New nickname is too long.\n", clientId);
         pthread_mutex_unlock(&clientsMutex);
         return -1;
@@ -60,17 +71,15 @@ int changeClientNick(int clientId, char *newNick) {
     return clientId;
 }
 
-// Returns the client Id, -1 if any errors occur
+// Returns the old room id, -1 if any errors occur
 int changeClientRoom(int clientId, unsigned int newRoom) {
     pthread_mutex_lock(&clientsMutex);
 
-    if (clientId >= registeredClientsCount) {
+    if ((clientId >= registeredClientsCount) || (existsRoomWithId(newRoom) == 0)) {
         fprintf(stderr, "[THREAD] Error: tried to change the room of client ID %d. registeredClientsCount = %d.\n", clientId, registeredClientsCount);
         pthread_mutex_unlock(&clientsMutex);
         return -1;
     }
-    // TODO Add consistency check for room ID
-    clientsArray[clientId].chatRoom = newRoom;
 
     pthread_mutex_unlock(&clientsMutex);
     return clientId;
