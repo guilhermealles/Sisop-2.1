@@ -6,7 +6,7 @@ OBJECTS=main.o client.o messagehandler.o room.o
 BINARY=server
 
 all: ${OBJECTS} ${INCLUDES}
-	${CC} ${CFLAGS} -o ${BINARY} ${OBJECTS}
+	${CC} ${CFLAGS} -o ${BINARY} ${OBJECTS} -lpthread
 
 clean:
 	rm -f ${BINARY}

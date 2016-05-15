@@ -39,8 +39,9 @@ char nick[MAX_NICK_LENGTH];
 char byteInicio;
 char *receiveBuffer;
 int number_of_rooms = 0;
-int selectedRoom = 0;
+int selectedRoom = -1;
 int enableToWrite = 0;
+int *rooms;
 
 
 
@@ -106,22 +107,25 @@ void userActions(){
 			}
 		}else{
 			if(enableToWrite){
-
-				MESSAGE *message = malloc(sizeof(MESSAGE));
-				message->clientId = ID;
-				message->tag = MESSAGE_TO_ROOM;
-				message->size = strlen(text) + sizeof(int) + sizeof(int);
-				message->roomId = selectedRoom;
-				strcpy(message->messageText, text);
-
-				// envia para o servidor
-				confirm = write(s, message, sizeof(MESSAGE));
-				if (confirm < 0){
-					printf("Erro na transmissão\n");
-					close(s);
-					return;
+				printf("mensagem: %s\n", text);
+				if(strlen(text) <= MAX_MESSAGE_LENGTH){
+					MESSAGE *message = malloc(sizeof(MESSAGE));
+					message->clientId = ID;
+					message->tag = MESSAGE_TO_ROOM;
+					message->size = strlen(text) + sizeof(int) + sizeof(int);
+					message->roomId = selectedRoom;
+					strcpy(message->messageText, text);
+					// envia para o servidor
+					confirm = write(s, message, sizeof(MESSAGE));
+					if (confirm < 0){
+						printf("Erro na transmissão\n");
+						close(s);
+						return;
+					}
+					printf("mensagem enviada \n");
+				}else{
+					printf("Warning: message is to big. \n");
 				}
-				printf("mensagem enviada \n");
 			}
 		}
 	}
@@ -158,8 +162,26 @@ void socketReceiver(){
 		}
 
 
-		if(firstByte[0] == MESSAGE_TO_ROOM){
-		//TODO:
+		int bytes_read = 0;
+		char buffer[BUFF];
+
+		while (bytes_read < 1) {
+			// Read at least the first byte
+			int current_bytes_read = read(s, &buffer[bytes_read], BUFF);
+			bytes_read += current_bytes_read;
+		}
+
+		int bytes_to_read = sizeof(MESSAGE) - bytes_read;
+		while (bytes_to_read > 0) {
+			int current_bytes_read = read(s, &buffer[bytes_read], bytes_to_read);
+			bytes_read += current_bytes_read;
+			bytes_to_read -= current_bytes_read;
+		}
+
+		MESSAGE *message = (MESSAGE *)buffer;
+		if(message->roomId == selectedRoom){
+			printf("%s: %s\n", message->nick, message->messageText);
+	
 		}
 	}
 }
@@ -278,7 +300,7 @@ void requestRoomList(){
 void leaveRoom(){
 	int package_length, confirm;
 
-	if(selectedRoom != 0){
+	if(selectedRoom != -1){
 		package_length = 0;
 
 		// concatena informacoes do pacote
@@ -299,9 +321,10 @@ void leaveRoom(){
 			printf("You left the room successfully.\n");
 			enableToWrite = 0;
 		}
+	}else{
+		printf("You're already outside the room.\n");
 	}
-
-	printf("You're already outside the room.\n");
+	
 }
 
 void joinRoom(){
@@ -311,9 +334,8 @@ void joinRoom(){
 
 	printf("Select a room:\n");
 	scanf("%d",&selectedRoom);
-
 	for(i=0; i<number_of_rooms; i++){
-		if(chat_room[i].roomId == selectedRoom){
+		if(rooms[i] == selectedRoom){
 			find = 1;
 		}
 	}
@@ -349,19 +371,20 @@ void joinRoom(){
 
 void printRooms(){
 	char buffer[BUFF];
-	printf("Number of rooms: %d.\n", number_of_rooms);
 	int bytes_read = 0;
+
 	while (bytes_read < (sizeof(CHAT_ROOM)*number_of_rooms)) {
 		int current_bytes_read = read(s, &buffer[bytes_read], sizeof(CHAT_ROOM));
 		bytes_read += current_bytes_read;
+		printf("bytes read %d \n", bytes_read);
 	}
 	// Here all the rooms should have already been read
-
+	rooms = malloc(sizeof(int) * number_of_rooms);
 	int i=0;
 	for(i=0; i<number_of_rooms; i++) {
 		unsigned int buffer_offset = i * sizeof(CHAT_ROOM);
 		CHAT_ROOM *room = (CHAT_ROOM*) &buffer[buffer_offset];
-
+		rooms[i] = room->roomId;
 		printf("\tRoom %d - %s\n", room->roomId, room->roomName);
 	}
 }
