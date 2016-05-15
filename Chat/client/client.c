@@ -40,7 +40,6 @@ char *receiveBuffer;
 int number_of_rooms = 0;
 int selectedRoom = -1;
 int enableToWrite = 0;
-int *rooms;
 
 
 
@@ -163,6 +162,7 @@ void socketReceiver(){
 
 		int bytes_read = 0;
 		char buffer[BUFF];
+		int notFound = 1, i=0;
 
 		while (bytes_read < 1) {
 			// Read at least the first byte
@@ -179,7 +179,15 @@ void socketReceiver(){
 
 		MESSAGE *message = (MESSAGE *)buffer;
 		if(message->roomId == selectedRoom){
-			printf("%s: %s\n", message->nick, message->messageText);
+			while(notFound){
+				if(chat_room[i].roomId == selectedRoom){
+					notFound = 0;
+				}else{
+					i++;
+				}
+			}
+		
+			printf("%s @ %s: %s\n", message->nick, chat_room[i].roomName, message->messageText);
 
 		}
 	}
@@ -334,7 +342,7 @@ void joinRoom(){
 	printf("Select a room:\n");
 	scanf("%d",&selectedRoom);
 	for(i=0; i<number_of_rooms; i++){
-		if(rooms[i] == selectedRoom){
+		if(chat_room[i].roomId == selectedRoom){
 			find = 1;
 		}
 	}
@@ -378,12 +386,13 @@ void printRooms(){
 		printf("bytes read %d \n", bytes_read);
 	}
 	// Here all the rooms should have already been read
-	rooms = malloc(sizeof(int) * number_of_rooms);
+	chat_room = malloc(sizeof(CHAT_ROOM) * number_of_rooms);
 	int i=0;
 	for(i=0; i<number_of_rooms; i++) {
 		unsigned int buffer_offset = i * sizeof(CHAT_ROOM);
 		CHAT_ROOM *room = (CHAT_ROOM*) &buffer[buffer_offset];
-		rooms[i] = room->roomId;
+		chat_room[i].roomId = room->roomId;
+		strcpy(chat_room[i].roomName, room->roomName);
 		printf("\tRoom %d - %s\n", room->roomId, room->roomName);
 	}
 }
