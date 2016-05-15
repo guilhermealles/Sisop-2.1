@@ -272,7 +272,7 @@ void leaveRoom(){
 		}
 
 		if(readServerResponse(0)){
-			printf("You lived the room successfully.\n");
+			printf("You left the room successfully.\n");
 			enableToWrite = 0;
 		}
 	}
