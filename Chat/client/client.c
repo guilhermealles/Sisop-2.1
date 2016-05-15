@@ -32,7 +32,7 @@ struct sockaddr_in  s_cli, s_serv;
 
 int ID;
 int porta_cli;
-char nick[32];
+char nick[MAX_NICK_LENGTH];
 char byteInicio;
 char *receiveBuffer;
 int number_of_rooms;
