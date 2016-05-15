@@ -24,8 +24,9 @@ void leaveRoom();
 void requestRoomList();
 void requestRegister();
 void createRoom();
+int readServerResponse(int id);
 
-SOCKET s;
+SOCKET s, receiver;
 CHAT_ROOM *chat_room;
 struct sockaddr_in  s_cli, s_serv;
 
@@ -36,6 +37,7 @@ char byteInicio;
 char *receiveBuffer;
 int number_of_rooms;
 int selectedRoom = 0;
+int enableToWrite = 0;
 
 
 
@@ -53,7 +55,6 @@ int main (int argc, char **argv){
 	requestRegister();
 	requestRoomList();
 
-	// TODO: imprime salas  - tratar atraso: usar flag, ou ..., ...
 	userActions();
 
 
@@ -62,41 +63,47 @@ int main (int argc, char **argv){
 
 void userActions(){
 
-	char option;
+	char bar, num;
 	int in = 1;
 
 	printf("Commands: \n");
-	printf("1 - join into a room chat\n");
-	printf("2 - leave a room chat\n");
-	printf("3 - create a room chat\n");
-	printf("4 - change nickname\n");
-	printf("5 - exit from Earth chat\n");
+	printf("*1 - join into a room chat\n");
+	printf("*2 - leave a room chat\n");
+	printf("*3 - create a room chat\n");
+	printf("*4 - change nickname\n");
+	printf("*5 - exit from Earth chat\n");
 
 
 	while(in){
-		scanf("%c",&option);
+		scanf("%c%c",&bar,&num);
+		if(bar == '*'){
+			switch(num){
+				case '1':
+					printf("join room - insere um numero \n");
+					joinRoom();
+					break;
+				case '2':
+					printf("leave room \n");
+					leaveRoom();
+					break;
+				case '3':
+					printf("create room - insere um numero\n");
+					createRoom();
+					break;
+				case '4':
+					setNick();
+					break;
+				case '5':
+					close(s);
+					exit(0);
+				default:
+					break;
+			}		
+		}else{
+			if(enableToWrite){
+				//TODO:
 
-		switch(option){
-			case '1':
-				printf("join room - insere um numero \n");
-				joinRoom();
-				break;
-			case '2':
-				printf("leave room \n");
-				leaveRoom();
-				break;
-			case '3':
-				printf("create room - insere um numero\n");
-				createRoom();
-				break;
-			case '4':
-				setNick();
-				break;
-			case '5':
-				close(s);
-				exit(0);
-			default:
-				break;
+			}
 		}
 	}
 
@@ -105,63 +112,78 @@ void userActions(){
 void socketReceiver(){
 	int confirm;
 	char firstByte[1];
-	char pack_lenght[4], pack_response[4], pack_id[4];
-	int convert_pack_lenght, response;
 
-	while(1){
+	if ((receiver = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET){
+		printf("Erro iniciando socket\n");
+		return;
+	}
+
+	s_serv.sin_family = AF_INET;
+	s_serv.sin_addr.s_addr = inet_addr(IP_SERVIDOR);
+	s_serv.sin_port = htons(SERVER_PORT);
+
+	if(connect(receiver, (struct sockaddr*)&s_serv, sizeof(s_serv)) != 0){
+		printf("Erro na conexao\n");
+		close(s);
+		exit(1);
+	}
+
+	while(enableToWrite){
+		
 		bzero(firstByte, 0);
 		confirm = read(s, firstByte, 1);
+		
+		if (confirm < 0) {
+			  perror("ERROR reading from socket");
+			  exit(1);
+		}
+		
+	
+		if(firstByte[0] == MESSAGE_TO_ROOM){
+		//TODO:
+		}
+	}
+}
+
+int readServerResponse(int id){
+	int confirm;
+	char firstByte[1];
+	char pack_response[4], pack_id[4];
+	int convert_pack_lenght, response;
+
+	while(confirm < 0){
+		bzero(firstByte, 0);
+		confirm = read(s, firstByte, 1);
+	}
+	/*	if (confirm < 0) {
+		  perror("ERROR reading from socket");
+		  exit(1);
+		}
+	*/
+	
+	if(firstByte[0] == SERVER_REPLY){
+	
+		confirm = read(s, pack_response, 4);
 
 		if (confirm < 0) {
 		  perror("ERROR reading from socket");
 		  exit(1);
 		}
+		response = *((int*)pack_response);
 
-	//	printf("buffer: %s\n",receiveBuffer);
-
-		switch(firstByte[0]){
-		
-			case SERVER_REPLY:
-				confirm = read(s, pack_response, 4);
-
-				if (confirm < 0) {
-				  perror("ERROR reading from socket");
-				  exit(1);
-				}
-				response = *((int*)pack_response);
-
-				if(response == SERV_REPLY_OK){
-					confirm = read(s, pack_id, 4);
-					ID = (int) strtol(pack_id, NULL, 10);
-					printf("id: %d\n", ID);
-				}else{
-					printf("err\n");
-				}
-
-				break;
-
-			case LIST_ROOMS:
-				confirm = read(s, pack_lenght, 4);
-
-				if (confirm < 0) {
-				  perror("ERROR reading from socket");
-				  exit(1);
-				}
-				convert_pack_lenght = *((int*)pack_lenght);
-
-				printRooms(convert_pack_lenght);
-
-				break;
-
-			default:
-				break;
-
+		if(response == SERV_REPLY_OK){
+			if(id == 1){
+				confirm = read(s, pack_id, 4);
+				ID = (int) strtol(pack_id, NULL, 10);
+				printf("id: %d\n", ID);
+			}
+			return 1;
 		}
 	}
-   return;
-
-
+	return 0;
+	
 }
+
 
 void createRoom(){
 	char roomName[MAX_ROOM_NAME_LENGTH];
@@ -172,7 +194,7 @@ void createRoom(){
 		printf("Please enter room name: \n");
 		scanf("%s",roomName);
 
-		if(strlen(roomName) > 51){
+		if(strlen(roomName) > MAX_ROOM_NAME_LENGTH){
 			printf("\n Room name must have up to 51 characters.\n");
 		}else{
 			notValidRoomName = 0;
@@ -197,11 +219,15 @@ void createRoom(){
 		return;
 	}
 
-
+	if(readServerResponse(0)){
+		printf("Room created successfully.\n");
+	}
 }
 
 void requestRoomList(){
-	int confirm;
+	int confirm, rec = 0;
+	char pack_lenght[4];
+	int convert_pack_lenght;
 
 	// concatena informacoes do pacote
 	REQUEST_ROOM_MESSAGE *req_message = malloc(sizeof(REQUEST_ROOM_MESSAGE));
@@ -216,6 +242,13 @@ void requestRoomList(){
 		close(s);
 		return;
 	}
+// SEGMENTATION FAULT POR AQUI
+	while(rec != 4)
+		rec = read(s, pack_lenght, 4);
+
+	convert_pack_lenght = *((int*)pack_lenght);
+
+	printRooms(convert_pack_lenght);
 }
 
 void leaveRoom(){
@@ -236,6 +269,11 @@ void leaveRoom(){
 			printf("Erro na transmissão\n");
 			close(s);
 			return;
+		}
+
+		if(readServerResponse(0)){
+			printf("You lived the room successfully.\n");
+			enableToWrite = 0;
 		}
 	}
 
@@ -274,6 +312,10 @@ void joinRoom(){
 			return;
 		}
 
+		if(readServerResponse(0)){
+			printf("You entered into the room.\n");
+			enableToWrite = 1;
+		}
 	}else{
 		printf("Selected room doesn't exist. \n");
 		selectedRoom = 0;
@@ -282,6 +324,7 @@ void joinRoom(){
 }
 
 void printRooms(int size){
+
 	int confirm, i, ind = 1;
 	char buffer[size];
 	char room_name[21];
@@ -295,7 +338,7 @@ void printRooms(int size){
 	}
 
 	// pega o byte que indica o numero de salas
-	number_of_rooms = buffer[0] - '0';
+	number_of_rooms = (int) strtol(&buffer[0], NULL, 10);
 	printf("Numero de salas: %d\n", number_of_rooms);
 
 	chat_room = (CHAT_ROOM*) malloc(size * sizeof(CHAT_ROOM));
@@ -305,12 +348,12 @@ void printRooms(int size){
 		chat_room[i].roomId = buffer[ind] - '0';
 
 		// seleciona os 21 bytes do buffer referentes ao nome - incluindo \0
-		memcpy(room_name, &buffer[ind + 1 ], 21 );
+		memcpy(room_name, &buffer[ind + 1 ], MAX_ROOM_NAME_LENGTH);
 		strcpy(chat_room[i].roomName, room_name);
 
 		printf("%d - %s\n", chat_room[i].roomId, chat_room[i].roomName);
 
-		ind+= 22;
+		ind+= MAX_ROOM_NAME_LENGTH+1;
 	}
 
 }
