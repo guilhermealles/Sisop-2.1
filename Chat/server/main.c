@@ -131,9 +131,9 @@ void* connection_thread(void* args) {
 			break;
 	}
 	if (bytesToRead < 0) {
-		fprintf(stderr, "[THREAD] Error: bytesToRead is less than 0!\n");
-		close(messageSocket);
-		exit(EXIT_FAILURE);
+		fprintf(stderr, "[THREAD] Warning: bytesToRead is less than 0 (value %d)!\n", bytesToRead);
+		//close(messageSocket);
+		//exit(EXIT_FAILURE);
 	}
 	// Read the remaining part of the packet (if any)
 	while (bytesToRead != 0) {

@@ -367,8 +367,8 @@ void requestRegister(){
 		printf("Please enter your nick name: \n");
 		scanf("%s",nick);
 
-		if(strlen(nick) > 31){
-			printf("\n Nickname must have up to 31 characters.\n");
+		if(strlen(nick) > MAX_NICK_LENGTH){
+			printf("\n Nickname must have up to %d characters.\n", MAX_NICK_LENGTH);
 		}else{
 			notValidNick = 0;
 		}
@@ -403,8 +403,8 @@ void setNick(){
 		printf("Please enter your nick name: \n");
 		scanf("%s",nick);
 
-		if(strlen(nick) > 31){
-			printf("\n Nickname must have up to 31 characters.\n");
+		if(strlen(nick) > MAX_NICK_LENGTH){
+			printf("\n Nickname must have up to %d characters.\n", MAX_NICK_LENGTH);
 		}else{
 			notValidNick = 0;
 		}
