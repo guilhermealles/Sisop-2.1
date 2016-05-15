@@ -19,10 +19,16 @@
 #define LEAVE_ROOM 'Q' //ok
 #define SET_NICK 'N' // ok
 
+typedef struct client {
+    unsigned int    clientId;
+    char            nick[31];
+    unsigned int    chatRoom;
+} CLIENT;
+
 typedef struct chatRoom {
     unsigned int    roomId;
     char*           roomName;
-    CLIENT         connectedClients[MAX_CLIENTS_PER_ROOM];
+    unsigned int    connectedClientIds[MAX_CLIENTS_PER_ROOM];
 } CHAT_ROOM;
 
 typedef struct message {

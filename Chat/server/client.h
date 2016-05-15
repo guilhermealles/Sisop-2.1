@@ -3,12 +3,6 @@
 
 #define CLIENTS_ARRAY_STEP_SIZE 10
 
-typedef struct client {
-    unsigned int    clientId;
-    char            nick[31];
-    unsigned int    chatRoom;
-} CLIENT;
-
 void initializeClientsManager();
 int registerNewClient(char *nick);
 int changeClientNick(int clientId, char *newNick);

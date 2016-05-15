@@ -135,9 +135,12 @@ void* connection_thread(void* args) {
 		case LEAVE_ROOM:
 			serverResponse = handleLeaveRoom(buffer);
 			break;
-		/*
-		 * TODO Add other cases
-		 */
+		case LIST_ROOMS:
+			//handle
+			break;
+		case MESSAGE_TO_ROOM:
+			//handle
+			break;
 		 default:
 		 	fprintf(stderr, "[THREAD] Error: unrecognized tag \"%c\".\n", buffer[0]);
 			exit(EXIT_FAILURE);
