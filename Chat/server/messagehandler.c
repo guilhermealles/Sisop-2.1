@@ -2,6 +2,7 @@
 #include <pthread.h>
 #include "../interface.h"
 #include "client.h"
+#include "room.h"
 
 pthread_mutex_t handlerMutex;
 
@@ -61,6 +62,23 @@ int handleLeaveRoom(char *buffer) {
         pthread_mutex_unlock(&handlerMutex);
         return SERV_REPLY_FAIL;
     }
+    pthread_mutex_unlock(&handlerMutex);
+    return SERV_REPLY_OK;
+}
+
+int handleCreateRoom(char *buffer) {
+    pthread_mutex_lock(&handlerMutex);
+
+    CREATE_ROOM_MESSAGE *message = (CREATE_ROOM_MESSAGE*) buffer;
+    int newRoom = createChatRoom(message->roomName);
+    extern unsigned int registeredClientsCount;
+    if (((int)message->clientId >= 0) && (message->clientId < registeredClientsCount)) {
+        if (changeClientRoom(message->clientId, newRoom) != message->clientId) {
+            fprintf(stderr, "[THREAD] Error when moving client %d to the just created room %d.\n", message->clientId, newRoom);
+        }
+    }
+
+    printf("[THREAD] Created new room:\n\t\tRoom ID: %d\n\t\tRoom Name: %s\n\t\tCreator ID: %d.\n", newRoom, message->roomName, message->clientId);
     pthread_mutex_unlock(&handlerMutex);
     return SERV_REPLY_OK;
 }

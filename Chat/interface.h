@@ -19,7 +19,7 @@
 #define MESSAGE_TO_ROOM 'M'
 #define LEAVE_ROOM 'Q' //ok
 #define SET_NICK 'N' // ok
-#define CREATE_ROOM 'T'
+#define CREATE_ROOM 'T' // ok
 
 typedef struct client {
     unsigned int    clientId;

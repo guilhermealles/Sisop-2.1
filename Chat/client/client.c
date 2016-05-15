@@ -194,8 +194,8 @@ void createRoom(){
 		printf("Please enter room name: \n");
 		scanf("%s",roomName);
 
-		if(strlen(roomName) > MAX_ROOM_NAME_LENGTH){
-			printf("\n Room name must have up to 51 characters.\n");
+		if(strlen(roomName) > MAX_ROOM_NAME_LENGTH-1){
+			printf("\n Room name must have up to %d characters.\n", MAX_ROOM_NAME_LENGTH-1);
 		}else{
 			notValidRoomName = 0;
 		}
@@ -203,13 +203,14 @@ void createRoom(){
 
 
 	// seta tamanho dos pacotes
-	package_length = sizeof(int) + strlen(roomName);
+	package_length = sizeof(int) + strlen(roomName)+1;
 
 	// concatena informacoes do pacote
 	CREATE_ROOM_MESSAGE *create_message = malloc(sizeof(CREATE_ROOM_MESSAGE));
 	create_message->tag = CREATE_ROOM;
 	create_message->size = package_length;
 	strcpy(create_message->roomName, roomName);
+	//TODO adicionar o ID do cliente no pacote
 
 	// envia para o servidor
 	confirm = write(s, create_message, sizeof(CREATE_ROOM_MESSAGE));

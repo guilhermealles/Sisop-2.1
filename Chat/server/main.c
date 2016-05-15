@@ -116,6 +116,10 @@ void* connection_thread(void* args) {
 			bytesToRead = sizeof(LEAVE_MESSAGE) - bytesRead;
 			printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(LEAVE_MESSAGE), bytesRead);
 			break;
+		case CREATE_ROOM:
+			bytesToRead = sizeof(CREATE_ROOM_MESSAGE) - bytesRead;
+			printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(CREATE_ROOM_MESSAGE), bytesRead);
+			break;
 		case LIST_ROOMS:
 			bytesToRead = sizeof(REQUEST_ROOM_MESSAGE) - bytesRead;
 			printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(REQUEST_ROOM_MESSAGE), bytesRead);
@@ -156,6 +160,9 @@ void* connection_thread(void* args) {
 			break;
 		case LEAVE_ROOM:
 			serverResponse = handleLeaveRoom(buffer);
+			break;
+		case CREATE_ROOM:
+			serverResponse = handleCreateRoom(buffer);
 			break;
 		case LIST_ROOMS:
 			//handle
