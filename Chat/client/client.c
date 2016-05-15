@@ -242,6 +242,7 @@ void requestRoomList(){
 	int confirm, rec = 0;
 	char pack_lenght[4];
 	int convert_pack_lenght;
+	char firstByte[1];
 
 	// concatena informacoes do pacote
 	REQUEST_ROOM_MESSAGE *req_message = malloc(sizeof(REQUEST_ROOM_MESSAGE));
@@ -256,11 +257,26 @@ void requestRoomList(){
 		close(s);
 		return;
 	}
-// SEGMENTATION FAULT POR AQUI
-	while(rec != 4)
-		rec = read(s, pack_lenght, 4);
 
-	convert_pack_lenght = *((int*)pack_lenght);
+	bzero(firstByte, 1);
+	while(firstByte[0] != 'S'){
+		rec = read(s, firstByte, 1);
+		if(rec < 0){
+			printf("Erro na transmissao.\n");
+			close(s);
+			return;
+		}
+	
+	}
+	rec = read(s, pack_lenght, 4);
+
+	if(rec < 0){
+		printf("Erro na transmissao.\n");
+		close(s);
+		return;
+	}
+	
+	convert_pack_lenght = *((int*)pack_lenght);	
 
 	printRooms(convert_pack_lenght);
 }
