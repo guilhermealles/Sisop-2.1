@@ -23,6 +23,7 @@ void joinRoom();
 void leaveRoom();
 void requestRoomList();
 void requestRegister();
+void createRoom();
 
 SOCKET s;
 CHAT_ROOM *chat_room;
@@ -86,6 +87,7 @@ void userActions(){
 				break;
 			case '3':
 				printf("create room - insere um numero\n");
+				createRoom();
 				break;
 			case '4':
 				setNick();
@@ -161,6 +163,43 @@ void socketReceiver(){
 
 }
 
+void createRoom(){
+	char roomName[MAX_ROOM_NAME_LENGTH];
+	int package_length, confirm;
+	int notValidRoomName = 1;
+
+	do{
+		printf("Please enter room name: \n");
+		scanf("%s",roomName);
+
+		if(strlen(roomName) > 51){
+			printf("\n Room name must have up to 51 characters.\n");
+		}else{
+			notValidRoomName = 0;
+		}
+	}while(notValidRoomName);
+
+
+	// seta tamanho dos pacotes
+	package_length = sizeof(int) + strlen(roomName);
+
+	// concatena informacoes do pacote
+	CREATE_ROOM_MESSAGE *create_message = malloc(sizeof(CREATE_ROOM_MESSAGE));
+	create_message->tag = CREATE_ROOM;
+	create_message->size = package_length;
+	strcpy(create_message->roomName, roomName);
+
+	// envia para o servidor
+	confirm = write(s, create_message, sizeof(CREATE_ROOM_MESSAGE));
+	if (confirm < 0){
+		printf("Erro na transmissão\n");
+		close(s);
+		return;
+	}
+
+
+}
+
 void requestRoomList(){
 	int confirm;
 
@@ -211,8 +250,6 @@ void joinRoom(){
 	printf("Select a room:\n");
 	scanf("%d",&selectedRoom);
 
-	printf("sala escolhida %d\n", selectedRoom);
-
 	for(i=0; i<number_of_rooms; i++){
 		if(chat_room[i].roomId == selectedRoom){
 			find = 1;
@@ -220,7 +257,7 @@ void joinRoom(){
 	}
 
 	if(find == 1){
-		package_length = sizeof(char) + sizeof(int);
+		package_length = sizeof(int);
 
 		// concatena informacoes do pacote
 		JOIN_MESSAGE *join_message = malloc(sizeof(JOIN_MESSAGE));
@@ -296,7 +333,7 @@ void requestRegister(){
 
 
 	// seta tamanho dos pacotes
-	package_length = sizeof(char) + sizeof(int) + strlen(nick);
+	package_length = strlen(nick);
 
 	// concatena informacoes do pacote
 	REQUEST_REGISTER *request_message = malloc(sizeof(REQUEST_REGISTER));
@@ -332,8 +369,7 @@ void setNick(){
 
 
 	// seta tamanho dos pacotes
-	nick_package = malloc(sizeof(char) + sizeof(int) + strlen(nick)); // tag + int   - somar \0 ??
-	package_length = sizeof(char) + sizeof(int) + strlen(nick);
+	package_length = sizeof(int) + strlen(nick);
 	printf("tamanho pacote: %d\n", package_length);
 
 	// concatena informacoes do pacote

@@ -19,6 +19,7 @@
 #define MESSAGE_TO_ROOM 'M'
 #define LEAVE_ROOM 'Q' //ok
 #define SET_NICK 'N' // ok
+#define CREATE_ROOM 'T'
 
 typedef struct client {
     unsigned int    clientId;
@@ -81,6 +82,12 @@ typedef struct requestRegister{
     char            tag;
     unsigned int    size;
     char            nick[MAX_NICK_LENGTH];
-} REQUEST_REGISTER;
+}REQUEST_REGISTER;
 
+typedef struct createRoomMessage{
+    char            tag;
+    unsigned int    size;
+	unsigned int    clientId;
+    char            roomName[MAX_ROOM_NAME_LENGTH];
+}CREATE_ROOM_MESSAGE;
 #endif
