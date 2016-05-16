@@ -106,7 +106,7 @@ void userActions(){
 			}
 		}else{
 			if(enableToWrite){
-				printf("mensagem: %s\n", text);
+			//	printf("mensagem: %s\n", text);
 				if(strlen(text) <= MAX_MESSAGE_LENGTH){
 					MESSAGE *message = malloc(sizeof(MESSAGE));
 					message->clientId = ID;
@@ -122,7 +122,7 @@ void userActions(){
 						close(s);
 						return;
 					}
-					printf("mensagem enviada \n");
+				//	printf("mensagem enviada %d\n", confirm);
 				}else{
 					printf("Warning: message is to big. \n");
 				}
@@ -135,10 +135,8 @@ void userActions(){
 void socketReceiver(){
 	int confirm;
 	char firstByte[1];
-
 	// enquanto nao tiver registro no socket de comando, nao abre o socket de dados
 	while(ID == -1);
-
 	if ((receiver = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET){
 		printf("Erro iniciando socket\n");
 		return;
@@ -172,13 +170,9 @@ void socketReceiver(){
 		int bytes_read = 0;
 		char buffer[BUFF];
 		int notFound = 1, i=0;
-
 		// se o cliente estiver dentro de uma sala
 		if(enableToWrite){
-
-			bzero(firstByte, 0);
-			confirm = read(receiver, firstByte, 1);
-
+			printf("enable to write and receive\n");
 			if (confirm < 0) {
 				  perror("ERROR reading from socket");
 				  exit(1);
@@ -189,7 +183,6 @@ void socketReceiver(){
 				int current_bytes_read = read(receiver, &buffer[bytes_read], BUFF);
 				bytes_read += current_bytes_read;
 			}
-
 			int bytes_to_read = sizeof(MESSAGE) - bytes_read;
 			while (bytes_to_read > 0) {
 				int current_bytes_read = read(receiver, &buffer[bytes_read], bytes_to_read);
