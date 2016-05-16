@@ -163,53 +163,58 @@ void socketReceiver(){
 	confirm = write(receiver, client, sizeof(CONFIRM_CLIENT_MESSAGE));
 	if (confirm < 0){
 		printf("Erro na transmissão\n");
-		close(s);
+		close(receiver);
 		return;
 	}
 
-	if(readServerResponse(CHECK_RESPONSE)){
-		printf("Registered in data socket.\n");
+	if(!readServerResponse(CHECK_RESPONSE)){
+		close(receiver);
+		return;
 	}
 
-	while(enableToWrite){
-
+	while(1){
+	
 		int bytes_read = 0;
 		char buffer[BUFF];
 		int notFound = 1, i=0;
 
-		bzero(firstByte, 0);
-		confirm = read(receiver, firstByte, 1);
+		// se o cliente estiver dentro de uma sala
+		if(enableToWrite){
 
-		if (confirm < 0) {
-			  perror("ERROR reading from socket");
-			  exit(1);
-		}
+			bzero(firstByte, 0);
+			confirm = read(receiver, firstByte, 1);
 
-		while (bytes_read < 1) {
-			// Read at least the first byte
-			int current_bytes_read = read(receiver, &buffer[bytes_read], BUFF);
-			bytes_read += current_bytes_read;
-		}
-
-		int bytes_to_read = sizeof(MESSAGE) - bytes_read;
-		while (bytes_to_read > 0) {
-			int current_bytes_read = read(receiver, &buffer[bytes_read], bytes_to_read);
-			bytes_read += current_bytes_read;
-			bytes_to_read -= current_bytes_read;
-		}
-
-		MESSAGE *message = (MESSAGE *)buffer;
-		if(message->roomId == selectedRoom){
-			while(notFound){
-				if(chat_room[i].roomId == selectedRoom){
-					notFound = 0;
-				}else{
-					i++;
-				}
+			if (confirm < 0) {
+				  perror("ERROR reading from socket");
+				  exit(1);
 			}
 
-			printf("%s @ %s: %s\n", message->nick, chat_room[i].roomName, message->messageText);
+			while (bytes_read < 1) {
+				// Read at least the first byte
+				int current_bytes_read = read(receiver, &buffer[bytes_read], BUFF);
+				bytes_read += current_bytes_read;
+			}
 
+			int bytes_to_read = sizeof(MESSAGE) - bytes_read;
+			while (bytes_to_read > 0) {
+				int current_bytes_read = read(receiver, &buffer[bytes_read], bytes_to_read);
+				bytes_read += current_bytes_read;
+				bytes_to_read -= current_bytes_read;
+			}
+
+			MESSAGE *message = (MESSAGE *)buffer;
+			if(message->roomId == selectedRoom){
+				while(notFound){
+					if(chat_room[i].roomId == selectedRoom){
+						notFound = 0;
+					}else{
+						i++;
+					}
+				}
+
+				printf("%s @ %s: %s\n", message->nick, chat_room[i].roomName, message->messageText);
+
+			}
 		}
 	}
 }
