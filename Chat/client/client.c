@@ -505,6 +505,10 @@ void setNick(){
 		close(s);
 		return;
 	}
+
+	if(readServerResponse(CHECK_RESPONSE)){
+		printf("Nick changed successfully.\n");
+	}
 }
 
 void connectToServer(){
