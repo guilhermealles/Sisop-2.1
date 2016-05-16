@@ -10,7 +10,7 @@
 #define MAX_NICK_LENGTH 31
 #define MAX_ROOM_NAME_LENGTH 51
 #define MAX_REPLY_MESSAGE_SIZE 101
-#define MAX_MESSAGE_LENGTH 1000
+#define MAX_MESSAGE_LENGTH 512
 
 // Possible server responses
 #define SERV_REPLY_OK 1

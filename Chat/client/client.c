@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h> // struct sockaddr_in
+#include <arpa/inet.h>
 #include "../interface.h"
 #include <pthread.h>
 

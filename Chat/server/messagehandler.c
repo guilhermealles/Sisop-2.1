@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <pthread.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "../interface.h"
@@ -76,12 +79,12 @@ int handleMessageToRoom(char *buffer) {
     }
     strcpy(message->senderNick, clientsArray[message->clientId].nick);
 
-    SOCKET messageSender;
+    int messageSender;
     int i;
     for(i=0; i<registeredClientsCount; i++) {
         if (clientsArray[i].chatRoom == message->roomId) {
             // Send the message to this client.
-            if ((messageSender = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
+            if ((messageSender = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
                 fprintf(stderr, "[THREAD] Error when creating socket to send message.\n");
                 return SERV_REPLY_FAIL;
             }
