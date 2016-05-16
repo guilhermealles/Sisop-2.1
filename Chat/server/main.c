@@ -91,6 +91,12 @@ void* connection_thread(void* args) {
 
 	char buffer[READ_BUFFER_SIZE];
 
+	pthread_t dataSocketBindThread;
+	if (pthread_create(&dataSocketBindThread, NULL, (void *)create_dataSocket, NULL) != 0) {
+		fprintf(stderr, "[THREAD] Error when creating dataSocketBindThread.\n");
+	}
+	printf("[THREAD] dataSocketBindThread created.\n");
+
 	while(1) {
 		// Fill buffer with zeros
 		memset(buffer, 0, sizeof(char)*READ_BUFFER_SIZE);
@@ -149,7 +155,7 @@ void* connection_thread(void* args) {
 		}
 
 		int serverResponse = SERV_REPLY_FAIL;
-		int servListRooms=0, messageToRoom=0;
+		int servListRooms=0, waitForDataSocketBind=0;
 		extern pthread_mutex_t handlerMutex;
 		extern int registeredClientsCount;
 		extern int registeredRoomsCount;
@@ -163,6 +169,7 @@ void* connection_thread(void* args) {
 				pthread_mutex_lock(&handlerMutex);
 				serverResponse = handleRegisterClient(buffer, clientAddr);
 				sprintf(response->message, "%d", (registeredClientsCount-1));
+				waitForDataSocketBind = 1;
 				pthread_mutex_unlock(&handlerMutex);
 				break;
 			case SET_NICK:
@@ -200,7 +207,7 @@ void* connection_thread(void* args) {
 				break;
 			case MESSAGE_TO_ROOM:
 				pthread_mutex_lock(&handlerMutex);
-				messageToRoom=1;
+				// Handle
 				pthread_mutex_unlock(&handlerMutex);
 				break;
 			 default:
@@ -238,6 +245,10 @@ void* connection_thread(void* args) {
 				exit(EXIT_FAILURE);
 			}
 		}
+
+		if (waitForDataSocketBind) {
+			pthread_join(dataSocketBindThread, NULL);
+		}
 	}
 
 	// Close the socket and free allocated memory
@@ -251,7 +262,7 @@ void* connection_thread(void* args) {
 
 void *create_dataSocket() {
 	struct sockaddr_in servAddr;
-	dataSocket = socket(AF_INET, SOCK_STREAM, 0);
+	int dataSocket = socket(AF_INET, SOCK_STREAM, 0);
 	if (dataSocket == -1) {
 		fprintf(stderr, "Error creating data socket.\n");
 		exit(EXIT_FAILURE);
@@ -281,7 +292,7 @@ void *create_dataSocket() {
 	}
 
 	char buffer[READ_BUFFER_SIZE];
-	bytesRead = 0;
+	int bytesRead = 0;
 	while(bytesRead < sizeof(CONFIRM_CLIENT_MESSAGE)) {
 		int currentBytesRead = read(finalDataSocket, buffer, sizeof(CONFIRM_CLIENT_MESSAGE));
 		bytesRead += currentBytesRead;
@@ -299,4 +310,5 @@ void *create_dataSocket() {
 	pthread_mutex_unlock(&handlerMutex);
 	close(dataSocket);
 
+	return 0;
 }

@@ -33,7 +33,7 @@ typedef struct client {
     char            nick[MAX_NICK_LENGTH];
     unsigned int    chatRoom;
     struct sockaddr clientAddress;
-    int             dataSocket=-1;
+    int             dataSocket;
 } CLIENT;
 
 typedef struct chatRoom {

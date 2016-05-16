@@ -46,6 +46,7 @@ int registerNewClient(char *nick, struct sockaddr clientAddress) {
     struct sockaddr_in *casted = (struct sockaddr_in*) &clientAddress;
     casted->sin_port = htons(PORTA_CLI);
     newClient->clientAddress = clientAddress;
+    newClient->dataSocket = -1;
 
     clientsArray[registeredClientsCount] = *newClient;
     free(newClient);

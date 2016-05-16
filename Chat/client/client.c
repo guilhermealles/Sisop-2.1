@@ -48,13 +48,13 @@ int main (int argc, char **argv){
 	pthread_t thread;
 
 	connectToServer();
+
+	printf("Welcome to Earth chat!!!\n");
+	requestRegister();
 	if (pthread_create(&thread, NULL, (void *)socketReceiver, NULL) != 0) {
 		fprintf(stderr, "Error when creating a thread.\n");
 		exit(EXIT_FAILURE);
 	}
-
-	printf("Welcome to Earth chat!!!\n");
-	requestRegister();
 	userActions();
 
 	pthread_join(thread, NULL);
@@ -207,7 +207,7 @@ void socketReceiver(){
 					i++;
 				}
 			}
-		
+
 			printf("%s @ %s: %s\n", message->nick, chat_room[i].roomName, message->messageText);
 
 		}

@@ -83,6 +83,9 @@ int handleMessageToRoom(char *buffer) {
     for(i=0; i<registeredClientsCount; i++) {
         if (clientsArray[i].chatRoom == message->roomId) {
             // Send the message to this client.
+            if (clientsArray[i].dataSocket == -1) {
+                fprintf(stderr, "[THREAD] Error: trying to send message to client %d with no data socket bound.\n", i);
+            }
             int confirm = write(clientsArray[i].dataSocket, message, sizeof(MESSAGE));
             if (confirm < 0) {
                 fprintf(stderr, "[THREAD] Error when writing message to socket.\n");
