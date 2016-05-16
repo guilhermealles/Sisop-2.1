@@ -33,7 +33,7 @@ SOCKET s, receiver;
 CHAT_ROOM *chat_room;
 struct sockaddr_in  s_cli, s_serv;
 
-int ID;
+int ID = -1;
 int porta_cli;
 char nick[MAX_NICK_LENGTH];
 char byteInicio;
@@ -41,7 +41,6 @@ char *receiveBuffer;
 int number_of_rooms = 0;
 int selectedRoom = -1;
 int enableToWrite = 0;
-int *rooms;
 
 
 
@@ -49,7 +48,6 @@ int main (int argc, char **argv){
 	pthread_t thread;
 
 	connectToServer();
-
 	if (pthread_create(&thread, NULL, (void *)socketReceiver, NULL) != 0) {
 		fprintf(stderr, "Error when creating a thread.\n");
 		exit(EXIT_FAILURE);
@@ -115,8 +113,9 @@ void userActions(){
 					message->size = strlen(text) + sizeof(int) + sizeof(int);
 					message->roomId = selectedRoom;
 					strcpy(message->messageText, text);
-					// envia para o servidor
-					confirm = write(s, message, sizeof(MESSAGE));
+
+					// envia para o socket de dados
+					confirm = write(receiver, message, sizeof(MESSAGE));
 					if (confirm < 0){
 						printf("Erro na transmissão\n");
 						close(s);
@@ -136,6 +135,9 @@ void socketReceiver(){
 	int confirm;
 	char firstByte[1];
 
+	// enquanto nao tiver registro no socket de comando, nao abre o socket de dados
+	while(ID == -1);
+
 	if ((receiver = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET){
 		printf("Erro iniciando socket\n");
 		return;
@@ -143,44 +145,70 @@ void socketReceiver(){
 
 	s_serv.sin_family = AF_INET;
 	s_serv.sin_addr.s_addr = inet_addr(IP_SERVIDOR);
-	s_serv.sin_port = htons(SERVER_PORT);
+	s_serv.sin_port = htons(DATA_SERVER_PORT);
 
 	if(connect(receiver, (struct sockaddr*)&s_serv, sizeof(s_serv)) != 0){
 		printf("Erro na conexao\n");
-		close(s);
+		close(receiver);
 		exit(1);
+	}
+
+	// concatena informacoes do pacote
+	CONFIRM_CLIENT_MESSAGE *client = malloc(sizeof(CONFIRM_CLIENT_MESSAGE));
+	client->tag = CREATE_ROOM;
+	client->size = sizeof(int);
+	client->clientId = ID;
+
+	// envia para o servidor
+	confirm = write(receiver, client, sizeof(CONFIRM_CLIENT_MESSAGE));
+	if (confirm < 0){
+		printf("Erro na transmissão\n");
+		close(s);
+		return;
+	}
+
+	if(readServerResponse(CHECK_RESPONSE)){
+		printf("Registered in data socket.\n");
 	}
 
 	while(enableToWrite){
 
+		int bytes_read = 0;
+		char buffer[BUFF];
+		int notFound = 1, i=0;
+
 		bzero(firstByte, 0);
-		confirm = read(s, firstByte, 1);
+		confirm = read(receiver, firstByte, 1);
 
 		if (confirm < 0) {
 			  perror("ERROR reading from socket");
 			  exit(1);
 		}
 
-
-		int bytes_read = 0;
-		char buffer[BUFF];
-
 		while (bytes_read < 1) {
 			// Read at least the first byte
-			int current_bytes_read = read(s, &buffer[bytes_read], BUFF);
+			int current_bytes_read = read(receiver, &buffer[bytes_read], BUFF);
 			bytes_read += current_bytes_read;
 		}
 
 		int bytes_to_read = sizeof(MESSAGE) - bytes_read;
 		while (bytes_to_read > 0) {
-			int current_bytes_read = read(s, &buffer[bytes_read], bytes_to_read);
+			int current_bytes_read = read(receiver, &buffer[bytes_read], bytes_to_read);
 			bytes_read += current_bytes_read;
 			bytes_to_read -= current_bytes_read;
 		}
 
 		MESSAGE *message = (MESSAGE *)buffer;
 		if(message->roomId == selectedRoom){
-			printf("%s: %s\n", message->nick, message->messageText);
+			while(notFound){
+				if(chat_room[i].roomId == selectedRoom){
+					notFound = 0;
+				}else{
+					i++;
+				}
+			}
+		
+			printf("%s @ %s: %s\n", message->nick, chat_room[i].roomName, message->messageText);
 
 		}
 	}
@@ -335,7 +363,7 @@ void joinRoom(){
 	printf("Select a room:\n");
 	scanf("%d",&selectedRoom);
 	for(i=0; i<number_of_rooms; i++){
-		if(rooms[i] == selectedRoom){
+		if(chat_room[i].roomId == selectedRoom){
 			find = 1;
 		}
 	}
@@ -379,12 +407,13 @@ void printRooms(){
 		printf("bytes read %d \n", bytes_read);
 	}
 	// Here all the rooms should have already been read
-	rooms = malloc(sizeof(int) * number_of_rooms);
+	chat_room = malloc(sizeof(CHAT_ROOM) * number_of_rooms);
 	int i=0;
 	for(i=0; i<number_of_rooms; i++) {
 		unsigned int buffer_offset = i * sizeof(CHAT_ROOM);
 		CHAT_ROOM *room = (CHAT_ROOM*) &buffer[buffer_offset];
-		rooms[i] = room->roomId;
+		chat_room[i].roomId = room->roomId;
+		strcpy(chat_room[i].roomName, room->roomName);
 		printf("\tRoom %d - %s\n", room->roomId, room->roomName);
 	}
 }
