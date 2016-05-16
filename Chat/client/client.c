@@ -167,11 +167,6 @@ void socketReceiver(){
 		return;
 	}
 
-	if(!readServerResponse(CHECK_RESPONSE)){
-		close(receiver);
-		return;
-	}
-
 	while(1){
 
 		int bytes_read = 0;
@@ -230,7 +225,7 @@ int readServerResponse(int id){
 
 	int bytes_to_read = sizeof(SERVER_RESPONSE) - bytes_read;
 	while (bytes_to_read > 0) {
-		int current_bytes_read = read(s, &buffer[bytes_read], bytes_to_read);
+		int current_bytes_read = read(s, &buffer[bytes_read], BUFF);
 		bytes_read += current_bytes_read;
 		bytes_to_read -= current_bytes_read;
 	}
@@ -357,10 +352,10 @@ void leaveRoom(){
 			printf("You left the room successfully.\n");
 			enableToWrite = 0;
 		}
-	}else{
-		printf("You're already outside the room.\n");
+		else{
+			printf("You're already outside the room.\n");
+		}
 	}
-
 }
 
 void joinRoom(){
@@ -393,12 +388,12 @@ void joinRoom(){
 			close(s);
 			return;
 		}
-
 		if(readServerResponse(CHECK_RESPONSE)){
 			printf("You entered in the room.\n");
 			enableToWrite = 1;
 		}
-	}else{
+	}
+	else {
 		printf("Selected room doesn't exist. \n");
 		selectedRoom = 0;
 	}
@@ -460,7 +455,6 @@ void requestRegister(){
 		return;
 	}
 
-
 	if(readServerResponse(SAVE_CLIENT_ID)){
 		printf("You are registered.\n");
 	}else{
@@ -489,7 +483,7 @@ void setNick(){
 
 	// seta tamanho dos pacotes
 	package_length = sizeof(int) + strlen(nick);
-	printf("tamanho pacote: %d\n", package_length);
+	//printf("tamanho pacote: %d\n", package_length);
 
 	// concatena informacoes do pacote
 	NICK_MESSAGE *nick_message = malloc(sizeof(NICK_MESSAGE));
@@ -504,6 +498,12 @@ void setNick(){
 		printf("Erro na transmissão\n");
 		close(s);
 		return;
+	}
+	if (readServerResponse(CHECK_RESPONSE)) {
+		printf("Nickname changed.\n");
+	}
+	else {
+		fprintf(stderr, "Server replied error.\n");
 	}
 }
 
