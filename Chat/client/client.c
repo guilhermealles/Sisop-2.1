@@ -173,7 +173,7 @@ void socketReceiver(){
 	}
 
 	while(1){
-	
+
 		int bytes_read = 0;
 		char buffer[BUFF];
 		int notFound = 1, i=0;
@@ -299,6 +299,9 @@ void createRoom(){
 
 	if(readServerResponse(CHECK_RESPONSE)){
 		printf("Room created successfully.\n");
+	}
+	else {
+		printf("Server returned error.\n");
 	}
 }
 

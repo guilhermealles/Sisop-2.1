@@ -224,6 +224,9 @@ void* connection_thread(void* args) {
 			close(messageSocket);
 			exit(EXIT_FAILURE);
 		}
+		else {
+			printf("[THREAD] Sent reply to client.\n");
+		}
 
 		if (servListRooms) {
 			extern CHAT_ROOM* roomsArray;
@@ -248,6 +251,7 @@ void* connection_thread(void* args) {
 
 		if (waitForDataSocketBind) {
 			pthread_join(dataSocketBindThread, NULL);
+			waitForDataSocketBind=0;
 		}
 	}
 
