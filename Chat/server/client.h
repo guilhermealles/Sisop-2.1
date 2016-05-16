@@ -8,5 +8,6 @@ int registerNewClient(char *nick, struct sockaddr clientAddress);
 int changeClientNick(int clientId, char *newNick);
 int changeClientRoom(int clientId, unsigned int newRom);
 int leaveRoom(int clientId);
+int bindDataSocket(int clientId, int socket);
 
 #endif

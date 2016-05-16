@@ -26,13 +26,14 @@
 #define LEAVE_ROOM 'Q' //ok
 #define SET_NICK 'N' // ok
 #define CREATE_ROOM 'T' // ok
-#define CONFIRM_CLIENT 'H' 
+#define CONFIRM_CLIENT 'H'
 
 typedef struct client {
     unsigned int    clientId;
     char            nick[MAX_NICK_LENGTH];
     unsigned int    chatRoom;
     struct sockaddr clientAddress;
+    int             dataSocket=-1;
 } CLIENT;
 
 typedef struct chatRoom {

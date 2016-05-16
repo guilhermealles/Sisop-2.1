@@ -104,4 +104,17 @@ int leaveRoom(int clientId) {
     return clientId;
 }
 
+int bindDataSocket(int clientId, int socket) {
+    pthread_mutex_lock(&clientsMutex);
+
+    if (clientId >= registeredClientsCount) {
+        fprintf(stderr, "[THREAD] Error: tried to bind socket to non existend client %d. registeredClientsCount = %d.\n", clientId, registeredClientsCount);
+        pthread_mutex_unlock(&clientsMutex);
+        return -1;
+    }
+    clientsArray[clientId].dataSocket = socket;
+
+    pthread_mutex_unlock(&clientsMutex);
+    return 0;
+}
 // TODO Add functions to remove a client from the list, destroy clients, etc

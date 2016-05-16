@@ -14,6 +14,7 @@
 #define READ_BUFFER_SIZE 1024
 
 void* connection_thread(void *args);
+void* create_dataSocket();
 
 int main (int argc, char **argv) {
 	int connectionSocket;
@@ -246,4 +247,56 @@ void* connection_thread(void* args) {
 	//free(response);
 
 	return 0;
+}
+
+void *create_dataSocket() {
+	struct sockaddr_in servAddr;
+	dataSocket = socket(AF_INET, SOCK_STREAM, 0);
+	if (dataSocket == -1) {
+		fprintf(stderr, "Error creating data socket.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	// Fill the servAddr variable
+	servAddr.sin_family = AF_INET;
+	servAddr.sin_port = htons(DATA_SERVER_PORT);
+	servAddr.sin_addr.s_addr = INADDR_ANY;
+	memset(&(servAddr.sin_zero), 0, 8);
+
+	printf("Binding data socket...\n");
+	// Bind the connection socket
+	if (bind(dataSocket, (struct sockaddr *) &servAddr, sizeof(servAddr)) < 0) {
+		fprintf(stderr, "Error when binding data socket.\n");
+		exit(EXIT_FAILURE);
+	}
+	printf("Data socket bound.\n");
+
+	listen(dataSocket, 1);
+	socklen_t clientLength = sizeof(struct sockaddr_in);
+	struct sockaddr clientAddr;
+	int finalDataSocket;
+	if ((finalDataSocket = accept(dataSocket, (struct sockaddr *) &clientAddr, &clientLength)) == -1) {
+		fprintf(stderr, "Error when accepting message from data socket.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	char buffer[READ_BUFFER_SIZE];
+	bytesRead = 0;
+	while(bytesRead < sizeof(CONFIRM_CLIENT_MESSAGE)) {
+		int currentBytesRead = read(finalDataSocket, buffer, sizeof(CONFIRM_CLIENT_MESSAGE));
+		bytesRead += currentBytesRead;
+	}
+
+	CONFIRM_CLIENT_MESSAGE *message = (CONFIRM_CLIENT_MESSAGE *)buffer;
+	extern pthread_mutex_t handlerMutex;
+	pthread_mutex_lock(&handlerMutex);
+	if (bindDataSocket(message->clientId, finalDataSocket) == -1) {
+		fprintf(stderr, "[THREAD] Error when binding data socket to client %d.\n", message->clientId);
+	}
+	else {
+		printf("[THREAD] Successfully bound data socket.\n");
+	}
+	pthread_mutex_unlock(&handlerMutex);
+	close(dataSocket);
+
 }
