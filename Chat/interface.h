@@ -5,6 +5,7 @@
 
 // Some constants
 #define SERVER_PORT 3010
+#define DATA_SERVER_PORT 3020
 #define PORTA_CLI 2345
 #define MAX_CLIENTS_PER_ROOM 30
 #define MAX_NICK_LENGTH 31
@@ -25,6 +26,7 @@
 #define LEAVE_ROOM 'Q' //ok
 #define SET_NICK 'N' // ok
 #define CREATE_ROOM 'T' // ok
+#define CONFIRM_CLIENT 'H' 
 
 typedef struct client {
     unsigned int    clientId;
@@ -98,4 +100,11 @@ typedef struct createRoomMessage{
 	unsigned int    clientId;
     char            roomName[MAX_ROOM_NAME_LENGTH];
 }CREATE_ROOM_MESSAGE;
+
+typedef struct confirmClient{
+	char            tag;
+    unsigned int    size;
+	unsigned int    clientId;
+
+} CONFIRM_CLIENT_MESSAGE;
 #endif
