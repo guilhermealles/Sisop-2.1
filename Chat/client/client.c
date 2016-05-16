@@ -499,6 +499,7 @@ void setNick(){
 		close(s);
 		return;
 	}
+
 	if (readServerResponse(CHECK_RESPONSE)) {
 		printf("Nickname changed.\n");
 	}
