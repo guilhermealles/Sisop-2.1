@@ -71,14 +71,14 @@ int main (int argc, char **argv) {
 		// Malloc a void* variable,
 		// First 4 bytes contains an int with the messageSocket descriptor
 		// Remaining bytes are the cliAddr structure
-		void *thread_args = (void*) malloc(sizeof(int) + sizeof(struct sockaddr));
-		int *firstArg = &thread_args[0];
-		struct sockaddr *secondArg = &thread_args[sizeof(int)];
+		char *thread_args = (char*) malloc(sizeof(int) + sizeof(struct sockaddr));
+		int *firstArg = (int*)&thread_args[0];
+		struct sockaddr *secondArg = (struct sockaddr *) &thread_args[sizeof(int)];
 		*firstArg = messageSocket;
 		memcpy(secondArg, (void*) &clientAddr, clientLength);
 
 		pthread_t thread;
-		if (pthread_create(&thread, NULL, (void *)connection_thread, thread_args) != 0) {
+		if (pthread_create(&thread, NULL, (void *)connection_thread, (void*) thread_args) != 0) {
 			fprintf(stderr, "Error when creating a connection thread.\n");
 			exit(EXIT_FAILURE);
 		}
@@ -90,9 +90,10 @@ int main (int argc, char **argv) {
 
 void* connection_thread(void* args) {
 	// Unwrap arguments
-	int *messageSocket_p = (int*) &args[0];
+	char *arguments = (char*) args;
+	int *messageSocket_p = (int*) &arguments[0];
 	int messageSocket = *messageSocket_p;
-	struct sockaddr *clientAddr_p = (struct sockaddr *) &args[sizeof(int)];
+	struct sockaddr *clientAddr_p = (struct sockaddr *) &arguments[sizeof(int)];
 	struct sockaddr clientAddr = *clientAddr_p;
 	printf("[THREAD] Will try to read message from socket %d.\n", messageSocket);
 
@@ -156,7 +157,7 @@ void* connection_thread(void* args) {
 		}
 
 		int serverResponse = SERV_REPLY_FAIL;
-		int servListRooms=0, waitForDataSocketBind=0;
+		int servListRooms=0;
 		extern pthread_mutex_t handlerMutex;
 		extern int registeredClientsCount;
 		extern int registeredRoomsCount;
@@ -170,7 +171,6 @@ void* connection_thread(void* args) {
 				pthread_mutex_lock(&handlerMutex);
 				serverResponse = handleRegisterClient(buffer, clientAddr);
 				sprintf(response->message, "%d", (registeredClientsCount-1));
-				waitForDataSocketBind = 1;
 				pthread_mutex_unlock(&handlerMutex);
 				break;
 			case SET_NICK:
@@ -226,7 +226,7 @@ void* connection_thread(void* args) {
 			exit(EXIT_FAILURE);
 		}
 		else {
-			printf("[THREAD] Sent reply to client.\n");
+			printf("[THREAD] Sent reply to client. Confirm = %d\n", confirm);
 		}
 
 		if (servListRooms) {
@@ -247,6 +247,10 @@ void* connection_thread(void* args) {
 				fprintf(stderr, "[THREAD] Error sending rooms list to client.\n");
 				close(messageSocket);
 				exit(EXIT_FAILURE);
+			}
+			else {
+				printf("Enviou a struct de salas. Confirm = %d.\n", confirm);
+				printf("Sizeof chat_room = %lu.\n", sizeof(CHAT_ROOM));
 			}
 		}
 	}

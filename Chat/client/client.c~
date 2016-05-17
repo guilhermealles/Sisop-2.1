@@ -104,10 +104,9 @@ void userActions(){
 				default:
 					break;
 			}
-		}
-		else {
+		}else{
 			if(enableToWrite){
-			//	printf("mensagem: %s\n", text);
+				printf("mensagem: %s\n", text);
 				if(strlen(text) <= MAX_MESSAGE_LENGTH){
 					MESSAGE *message = malloc(sizeof(MESSAGE));
 					message->clientId = ID;
@@ -123,7 +122,7 @@ void userActions(){
 						close(s);
 						return;
 					}
-				//	printf("mensagem enviada %d\n", confirm);
+					printf("mensagem enviada \n");
 				}else{
 					printf("Warning: message is to big. \n");
 				}
@@ -136,8 +135,10 @@ void userActions(){
 void socketReceiver(){
 	int confirm;
 	char firstByte[1];
+
 	// enquanto nao tiver registro no socket de comando, nao abre o socket de dados
 	while(ID == -1);
+
 	if ((receiver = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET){
 		printf("Erro iniciando socket\n");
 		return;
@@ -171,21 +172,27 @@ void socketReceiver(){
 		int bytes_read = 0;
 		char buffer[BUFF];
 		int notFound = 1, i=0;
+
 		// se o cliente estiver dentro de uma sala
 		if(enableToWrite){
-			printf("enable to write and receive\n");
+
+			bzero(firstByte, 0);
+			confirm = read(receiver, firstByte, 1);
+
 			if (confirm < 0) {
 				  perror("ERROR reading from socket");
 				  exit(1);
 			}
+
 			while (bytes_read < 1) {
 				// Read at least the first byte
-				int current_bytes_read = read(receiver, &buffer[bytes_read], sizeof(MESSAGE));
+				int current_bytes_read = read(receiver, &buffer[bytes_read], BUFF);
 				bytes_read += current_bytes_read;
 			}
+
 			int bytes_to_read = sizeof(MESSAGE) - bytes_read;
 			while (bytes_to_read > 0) {
-				int current_bytes_read = read(receiver, &buffer[bytes_read], BUFF);
+				int current_bytes_read = read(receiver, &buffer[bytes_read], bytes_to_read);
 				bytes_read += current_bytes_read;
 				bytes_to_read -= current_bytes_read;
 			}
@@ -199,7 +206,9 @@ void socketReceiver(){
 						i++;
 					}
 				}
+
 				printf("%s @ %s: %s\n", message->nick, chat_room[i].roomName, message->messageText);
+
 			}
 		}
 	}
