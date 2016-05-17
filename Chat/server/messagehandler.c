@@ -79,7 +79,7 @@ int handleMessageToRoom(char *buffer) {
     }
     strcpy(message->senderNick, clientsArray[message->clientId].nick);
 
-    printf("Received message to send to room %d. Message:\n\"%s\".\n", message->roomId, message->messageText);
+    printf("Client \"%s\" sent message to room %d. Message:\n\"%s\".\n", message->nick, message->roomId, message->messageText);
     int i;
     for(i=0; i<registeredClientsCount; i++) {
         if (clientsArray[i].chatRoom == message->roomId) {

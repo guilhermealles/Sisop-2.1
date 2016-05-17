@@ -76,7 +76,7 @@ void userActions(){
 
 	while(in){
 		fflush(stdin);
-		scanf("%s",text);
+		fgets(text, MAX_MESSAGE_LENGTH, stdin);
 		if(text[0] == '*'){
 			switch(text[1]){
 				case '1':
@@ -173,7 +173,6 @@ void socketReceiver(){
 		int notFound = 1, i=0;
 		// se o cliente estiver dentro de uma sala
 		if(enableToWrite){
-			printf("enable to write and receive\n");
 			if (confirm < 0) {
 				  perror("ERROR reading from socket");
 				  exit(1);
@@ -199,7 +198,7 @@ void socketReceiver(){
 						i++;
 					}
 				}
-				printf("%s @ %s: %s\n", message->nick, chat_room[i].roomName, message->messageText);
+				printf("%s @ %s: %s\n", message->senderNick, chat_room[i].roomName, message->messageText);
 			}
 		}
 	}
