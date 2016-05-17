@@ -104,7 +104,7 @@ void* connection_thread(void* args) {
 		memset(buffer, 0, sizeof(char)*READ_BUFFER_SIZE);
 		int bytesRead = 0;
 		while (bytesRead < 1) {
-			// Try to read at least first byte (containing the tag)
+			// Try to read at least first byte (containing the tag) TODO-> Tratar o tamanho do buffer de leitura (caso o servidor leia mais de uma msg)
 			int currentBytesRead = read(messageSocket, &buffer[bytesRead], READ_BUFFER_SIZE);
 			bytesRead += currentBytesRead;
 		}

@@ -184,7 +184,7 @@ void socketReceiver(){
 			}
 			int bytes_to_read = sizeof(MESSAGE) - bytes_read;
 			while (bytes_to_read > 0) {
-				int current_bytes_read = read(receiver, &buffer[bytes_read], BUFF);
+				int current_bytes_read = read(receiver, &buffer[bytes_read], bytes_to_read);
 				bytes_read += current_bytes_read;
 				bytes_to_read -= current_bytes_read;
 			}
@@ -215,7 +215,7 @@ int readServerResponse(int id){
 
 	int bytes_to_read = sizeof(SERVER_RESPONSE) - bytes_read;
 	while (bytes_to_read > 0) {
-		int current_bytes_read = read(s, &buffer[bytes_read], BUFF);
+		int current_bytes_read = read(s, &buffer[bytes_read], bytes_to_read);
 		bytes_read += current_bytes_read;
 		bytes_to_read -= current_bytes_read;
 	}
