@@ -75,7 +75,7 @@ void userActions(){
 
 
 	while(in){
-		scanf("%s",text);
+		fgets(text, MAX_MESSAGE_LENGTH, stdin);
 		if(text[0] == '*'){
 			switch(text[1]){
 				case '1':
@@ -103,7 +103,8 @@ void userActions(){
 				default:
 					break;
 			}
-		}else{
+		}
+		else {
 			if(enableToWrite){
 				printf("mensagem: %s\n", text);
 				if(strlen(text) <= MAX_MESSAGE_LENGTH){
@@ -115,7 +116,7 @@ void userActions(){
 					strcpy(message->messageText, text);
 
 					// envia para o socket de dados
-					confirm = write(receiver, message, sizeof(MESSAGE));
+					confirm = write(s, message, sizeof(MESSAGE));
 					if (confirm < 0){
 						printf("Erro na transmissão\n");
 						close(s);
@@ -172,18 +173,8 @@ void socketReceiver(){
 		int bytes_read = 0;
 		char buffer[BUFF];
 		int notFound = 1, i=0;
-
 		// se o cliente estiver dentro de uma sala
 		if(enableToWrite){
-
-			bzero(firstByte, 0);
-			confirm = read(receiver, firstByte, 1);
-
-			if (confirm < 0) {
-				  perror("ERROR reading from socket");
-				  exit(1);
-			}
-
 			while (bytes_read < 1) {
 				// Read at least the first byte
 				int current_bytes_read = read(receiver, &buffer[bytes_read], BUFF);
@@ -192,7 +183,7 @@ void socketReceiver(){
 
 			int bytes_to_read = sizeof(MESSAGE) - bytes_read;
 			while (bytes_to_read > 0) {
-				int current_bytes_read = read(receiver, &buffer[bytes_read], bytes_to_read);
+				int current_bytes_read = read(receiver, &buffer[bytes_read], BUFF);
 				bytes_read += current_bytes_read;
 				bytes_to_read -= current_bytes_read;
 			}
@@ -206,9 +197,7 @@ void socketReceiver(){
 						i++;
 					}
 				}
-
 				printf("%s @ %s: %s\n", message->nick, chat_room[i].roomName, message->messageText);
-
 			}
 		}
 	}

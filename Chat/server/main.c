@@ -208,7 +208,7 @@ void* connection_thread(void* args) {
 				break;
 			case MESSAGE_TO_ROOM:
 				pthread_mutex_lock(&handlerMutex);
-				// Handle
+				serverResponse = handleMessageToRoom(buffer);
 				pthread_mutex_unlock(&handlerMutex);
 				break;
 			 default:
