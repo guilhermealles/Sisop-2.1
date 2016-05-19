@@ -82,7 +82,7 @@ int handleMessageToRoom(char *buffer) {
     printf("Client \"%s\" sent message to room %d. Message:\n\"%s\".\n", message->nick, message->roomId, message->messageText);
     int i;
     for(i=0; i<registeredClientsCount; i++) {
-        if (clientsArray[i].chatRoom == message->roomId) {
+     //   if (clientsArray[i].chatRoom == message->roomId) {
             // Send the message to this client.
             if (clientsArray[i].dataSocket == -1) {
                 fprintf(stderr, "[THREAD] Error: trying to send message to client %d with no data socket bound.\n", i);
@@ -92,7 +92,7 @@ int handleMessageToRoom(char *buffer) {
                 fprintf(stderr, "[THREAD] Error when writing message to socket.\n");
                 return SERV_REPLY_FAIL;
             }
-        }
+     //   }
     }
     return SERV_REPLY_OK;
 }
