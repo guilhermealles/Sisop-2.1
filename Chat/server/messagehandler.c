@@ -15,16 +15,15 @@ void initializeMessageHandler() {
     pthread_mutex_init(&handlerMutex, NULL);
 }
 
-int handleRegisterClient(char *buffer, struct sockaddr clientAddress) {
+int handleRegisterClient(char *buffer) {
     REQUEST_REGISTER *message = (REQUEST_REGISTER*) buffer;
     int clientId;
-    if ((clientId = registerNewClient(message->nick, clientAddress)) == -1) {
+    if ((clientId = registerNewClient(message->nick)) == -1) {
         fprintf(stderr, "[THREAD] Error when registering user with nick %s. Probably nick already in use.\n", message->nick);
         return SERV_REPLY_FAIL;
     }
     extern CLIENT* clientsArray;
-    struct sockaddr_in *casted = (struct sockaddr_in*) &clientsArray[clientId].clientAddress;
-    printf("[THREAD] Registered new user\n\t\tNick: %s\n\t\tClientId: %d\n\t\tClient Address: %s:%d\n", message->nick, clientId, inet_ntoa(casted->sin_addr), casted->sin_port);
+    printf("[THREAD] Registered new user\n\t\tNick: %s\n\t\tClientId: %d\n", message->nick, clientId);
     return SERV_REPLY_OK;
 }
 
