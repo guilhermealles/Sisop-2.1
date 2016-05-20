@@ -534,7 +534,7 @@ void closeConnection(){
 	}
 
 	close(s);
-	printf("Nice to meet you! Come back soon!!\n");
+	printf("Nice to meet you! Come back soon!!");
 
 }
 
