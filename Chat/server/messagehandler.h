@@ -10,5 +10,6 @@ int handleLeaveRoom(char *buffer);
 int handleCreateRoom(char *buffer);
 int handleListRoom(char *buffer);
 int handleMessageToRoom(char *buffer);
+int handleDisconnectClient(char *buffer);
 
 #endif

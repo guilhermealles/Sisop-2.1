@@ -138,6 +138,10 @@ void* connection_thread(void* args) {
 				bytesToRead = sizeof(MESSAGE) - bytesRead;
 				printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(MESSAGE), bytesRead);
 				break;
+			case CLOSE_CHAT:
+				bytesToRead = sizeof(CLOSE_CHAT_MESSAGE) - bytesRead;
+				printf("[THREAD] Recognized tag %c, size of struct = %lu, bytes read = %d\n", buffer[0], sizeof(CLOSE_CHAT_MESSAGE), bytesRead);
+				break;
 			 default:
 			 	fprintf(stderr, "[THREAD] Error: unrecognized tag \"%c\".\n", buffer[0]);
 				close(messageSocket);
@@ -169,8 +173,9 @@ void* connection_thread(void* args) {
 		switch(buffer[0]) {
 			case CLIENT_REGISTER:
 				pthread_mutex_lock(&handlerMutex);
-				serverResponse = handleRegisterClient(buffer);
-				sprintf(response->message, "%d", (registeredClientsCount-1));
+				int newClientId = handleRegisterClient(buffer);
+				serverResponse = (newClientId==-1) ? SERV_REPLY_FAIL : SERV_REPLY_OK;
+				sprintf(response->message, "%d", newClientId);
 				pthread_mutex_unlock(&handlerMutex);
 				break;
 			case SET_NICK:
@@ -209,6 +214,11 @@ void* connection_thread(void* args) {
 			case MESSAGE_TO_ROOM:
 				pthread_mutex_lock(&handlerMutex);
 				serverResponse = handleMessageToRoom(buffer);
+				pthread_mutex_unlock(&handlerMutex);
+				break;
+			case CLOSE_CHAT:
+				pthread_mutex_lock(&handlerMutex);
+				handleDisconnectClient(buffer);
 				pthread_mutex_unlock(&handlerMutex);
 				break;
 			 default:

@@ -9,5 +9,6 @@ int changeClientNick(int clientId, char *newNick);
 int changeClientRoom(int clientId, unsigned int newRom);
 int leaveRoom(int clientId);
 int bindDataSocket(int clientId, int socket);
+int disconnectClient(int clientId);
 
 #endif

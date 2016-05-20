@@ -24,7 +24,7 @@ int handleRegisterClient(char *buffer) {
     }
     extern CLIENT* clientsArray;
     printf("[THREAD] Registered new user\n\t\tNick: %s\n\t\tClientId: %d\n", message->nick, clientId);
-    return SERV_REPLY_OK;
+    return clientId;
 }
 
 int handleChangeNick(char *buffer) {
@@ -92,6 +92,15 @@ int handleMessageToRoom(char *buffer) {
                 return SERV_REPLY_FAIL;
             }
      //   }
+    }
+    return SERV_REPLY_OK;
+}
+
+int handleDisconnectClient(char *buffer) {
+    CLOSE_CHAT_MESSAGE *message = (CLOSE_CHAT_MESSAGE*) buffer;
+    if (disconnectClient(message->clientId) == -1) {
+        fprintf(stderr, "[THREAD] Error when disconnecting client %d.\n", message->clientId);
+        return SERV_REPLY_FAIL;
     }
     return SERV_REPLY_OK;
 }

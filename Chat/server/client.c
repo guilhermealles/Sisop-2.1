@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <arpa/inet.h>
 #include "../interface.h"
 #include "client.h"
@@ -22,37 +23,49 @@ void initializeClientsManager() {
 }
 
 // Returns the ID of the new client, -1 if error
-int registerNewClient(char *nick) {
+int registerNewClient (char *nick) {
+
     pthread_mutex_lock(&clientsMutex);
-
-    if (registeredClientsCount >= (clientsArraySize-1)) {
-        CLIENT *tmpArray = realloc(clientsArray, clientsArraySize+CLIENTS_ARRAY_STEP_SIZE);
-        free(clientsArray);
-        clientsArray = tmpArray;
-    }
-
-    // Check if nickname not used
-    int i=0;
-    for(i=0; i<registeredClientsCount; i++) {
+    unsigned int i;
+    int id = -1;
+    for (i=0; i<registeredClientsCount; i++) {
         if (strcmp(clientsArray[i].nick, nick) == 0) {
             fprintf(stderr, "[THREAD] Error: nick %s already in use!\n", nick);
-            pthread_mutex_unlock(&clientsMutex);
             return -1;
         }
+
+        // If an id has not yet been found and there is an empty entry in the array
+        if ((id == -1) && (clientsArray[i].clientId == -1)) {
+            // Assign ID to the new client
+            id = i;
+        }
     }
+
+    //If it was not possible to find an empty entry in the middle of the array
+    if (id == -1) {
+        // Realloc array if needed
+        if (registeredClientsCount >= (clientsArraySize-1)) {
+            CLIENT *tmpArray = realloc(clientsArray, clientsArraySize+CLIENTS_ARRAY_STEP_SIZE);
+            free(clientsArray);
+            clientsArray = tmpArray;
+        }
+        id = registeredClientsCount;
+        registeredClientsCount++;
+    }
+    // At this point a valid ID has already been found
+
     CLIENT *newClient = malloc(sizeof(CLIENT));
-    newClient->clientId = registeredClientsCount;
+    newClient->clientId = id;
     strcpy(newClient->nick, nick);
     newClient->dataSocket = -1;
 
-    clientsArray[registeredClientsCount] = *newClient;
+    clientsArray[newClient->clientId] = *newClient;
     free(newClient);
-    int returnValue = registeredClientsCount;
-    registeredClientsCount++;
-
     pthread_mutex_unlock(&clientsMutex);
-    return returnValue;
+
+    return id;
 }
+
 
 int changeClientNick(int clientId, char *newNick) {
     pthread_mutex_lock(&clientsMutex);
@@ -115,11 +128,22 @@ int bindDataSocket(int clientId, int socket) {
     pthread_mutex_unlock(&clientsMutex);
     return 0;
 }
-// TODO Add functions to remove a client from the list, destroy clients, etc
 
 int disconnectClient(int clientId) {
     pthread_mutex_lock(&clientsMutex);
-    // TODO
+
+    if (clientId >= registeredClientsCount) {
+        fprintf(stderr, "[THREAD] Error: tried to disconnect client %d. registeredClientsCount = %d.\n", clientId, registeredClientsCount);
+        pthread_mutex_unlock(&clientsMutex);
+        return -1;
+    }
+    // Close the data socket for the specified client
+    close (clientsArray[clientId].dataSocket);
+    // Clear client nickname, chat room and client ID
+    memset(&(clientsArray[clientId].nick[0]), MAX_NICK_LENGTH, '\0');
+    clientsArray[clientId].chatRoom = -1;
+    clientsArray[clientId].clientId = -1;
+
     pthread_mutex_unlock(&clientsMutex);
     return 0;
 }

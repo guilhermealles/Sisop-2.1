@@ -20,14 +20,14 @@
 // List of all possible "tags"
 #define SERVER_REPLY 'R' //ok
 #define CLIENT_REGISTER 'C' // ok
-#define LIST_ROOMS 'L'
+#define LIST_ROOMS 'L' // ok
 #define JOIN_ROOM 'J' // ok
 #define MESSAGE_TO_ROOM 'M'
 #define LEAVE_ROOM 'Q' //ok
 #define SET_NICK 'N' // ok
 #define CREATE_ROOM 'T' // ok
 #define CONFIRM_CLIENT 'H'
-#define CLOSE_CHAT 'X'
+#define CLOSE_CHAT 'X' // ok
 
 typedef struct client {
     unsigned int    clientId;
@@ -112,7 +112,7 @@ typedef struct confirmClient{
 typedef struct closeChat{
 	char 			tag;
     unsigned int    size;
-	unsigned int    clientId;	
+	unsigned int    clientId;
 } CLOSE_CHAT_MESSAGE;
 
 #endif
