@@ -22,7 +22,7 @@ void initializeClientsManager() {
 }
 
 // Returns the ID of the new client, -1 if error
-int registerNewClient(char *nick, struct sockaddr clientAddress) {
+int registerNewClient(char *nick) {
     pthread_mutex_lock(&clientsMutex);
 
     if (registeredClientsCount >= (clientsArraySize-1)) {
@@ -43,9 +43,6 @@ int registerNewClient(char *nick, struct sockaddr clientAddress) {
     CLIENT *newClient = malloc(sizeof(CLIENT));
     newClient->clientId = registeredClientsCount;
     strcpy(newClient->nick, nick);
-    struct sockaddr_in *casted = (struct sockaddr_in*) &clientAddress;
-    casted->sin_port = htons(PORTA_CLI);
-    newClient->clientAddress = clientAddress;
     newClient->dataSocket = -1;
 
     clientsArray[registeredClientsCount] = *newClient;
@@ -119,3 +116,10 @@ int bindDataSocket(int clientId, int socket) {
     return 0;
 }
 // TODO Add functions to remove a client from the list, destroy clients, etc
+
+int disconnectClient(int clientId) {
+    pthread_mutex_lock(&clientsMutex);
+    // TODO
+    pthread_mutex_unlock(&clientsMutex);
+    return 0;
+}

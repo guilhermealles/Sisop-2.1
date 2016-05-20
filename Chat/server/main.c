@@ -169,7 +169,7 @@ void* connection_thread(void* args) {
 		switch(buffer[0]) {
 			case CLIENT_REGISTER:
 				pthread_mutex_lock(&handlerMutex);
-				serverResponse = handleRegisterClient(buffer, clientAddr);
+				serverResponse = handleRegisterClient(buffer);
 				sprintf(response->message, "%d", (registeredClientsCount-1));
 				pthread_mutex_unlock(&handlerMutex);
 				break;
