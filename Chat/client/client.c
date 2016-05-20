@@ -28,6 +28,7 @@ void requestRoomList();
 void requestRegister();
 void createRoom();
 int readServerResponse(int id);
+void closeConnection();
 
 SOCKET s, receiver;
 CHAT_ROOM *chat_room;
@@ -99,7 +100,7 @@ void userActions(){
 					requestRoomList();
 					break;
 				case '6':
-					close(s);
+					closeConnection();
 					exit(0);
 				default:
 					break;
@@ -515,3 +516,28 @@ void connectToServer(){
 		exit(1);
 	}
 }
+
+void closeConnection(){
+	int confirm;
+
+	CLOSE_CHAT_MESSAGE *close_message = malloc(sizeof(CLOSE_CHAT_MESSAGE));
+	close_message->tag = CLOSE_CHAT;
+	close_message->size = sizeof(int);
+	close_message->clientId = ID;
+
+	// envia para o servidor
+	confirm = write(s, close_message, sizeof(CLOSE_CHAT_MESSAGE));
+	if (confirm < 0){
+		printf("Erro na transmissão\n");
+		close(s);
+		return;
+	}
+
+	close(s);
+	printf("Nice to meet you! Come back soon!!\n");
+
+}
+
+
+
+

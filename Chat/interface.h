@@ -27,6 +27,7 @@
 #define SET_NICK 'N' // ok
 #define CREATE_ROOM 'T' // ok
 #define CONFIRM_CLIENT 'H'
+#define CLOSE_CHAT 'X'
 
 typedef struct client {
     unsigned int    clientId;
@@ -107,4 +108,11 @@ typedef struct confirmClient{
 	unsigned int    clientId;
 
 } CONFIRM_CLIENT_MESSAGE;
+
+typedef struct closeChat{
+	char 			tag;
+    unsigned int    size;
+	unsigned int    clientId;	
+} CLOSE_CHAT_MESSAGE;
+
 #endif
