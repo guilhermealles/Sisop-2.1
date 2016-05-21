@@ -219,7 +219,6 @@ void* connection_thread(void* args) {
 			case CLOSE_CHAT:
 				pthread_mutex_lock(&handlerMutex);
 				handleDisconnectClient(buffer);
-				disconnectedClient = 1;
 				pthread_mutex_unlock(&handlerMutex);
 				break;
 			 default:
