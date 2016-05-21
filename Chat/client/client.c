@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include "../interface.h"
 #include <pthread.h>
+#include <gtk/gtk.h>
 
 #define	SOCKET	int
 #define INVALID_SOCKET  ((SOCKET)~0)
@@ -17,16 +18,17 @@
 #define SAVE_CLIENT_ID 1
 #define SAVE_NUMBER_OF_ROOMS 2
 
+void sendButtonCallback(GtkWidget *widget, gpointer data);
+void doUserAction(char *buffer);
 void connectToServer();
-void setNick();
+void setNick(char *buffer);
 void socketReceiver();
 void printRooms();
-void userActions();
-void joinRoom();
+void joinRoom(char *buffer);
 void leaveRoom();
 void requestRoomList();
 void requestRegister();
-void createRoom();
+void createRoom(char *buffer);
 int readServerResponse(int id);
 void closeConnection();
 
@@ -43,6 +45,11 @@ int number_of_rooms = 0;
 int selectedRoom = -1;
 int enableToWrite = 0;
 
+// These variables are used to indicate the state of the client application, i.e
+// what to do with the next message that comes from the GUI
+unsigned int set_nick_action=0, join_room_action=0, create_room_action=0;
+
+GtkWidget *entry1;
 
 
 int main (int argc, char **argv){
@@ -56,82 +63,142 @@ int main (int argc, char **argv){
 		fprintf(stderr, "Error when creating a thread.\n");
 		exit(EXIT_FAILURE);
 	}
-	userActions();
-
-	pthread_join(thread, NULL);
-}
-
-void userActions(){
-
-	char text[MAX_MESSAGE_LENGTH];
-	int in = 1, confirm;
 
 	printf("Commands: \n");
-	printf("*1 - join into a room chat\n");
-	printf("*2 - leave a room chat\n");
-	printf("*3 - create a room chat\n");
+	printf("*1 - join a chat room\n");
+	printf("*2 - leave a chat room\n");
+	printf("*3 - create a chat room\n");
 	printf("*4 - change nickname\n");
-	printf("*5 - list rooms\n");
-	printf("*6 - exit from Earth chat\n");
+	printf("*5 - list chat rooms\n");
+	printf("*6 - exit Earth chat\n");
+
+	/*
+	 * Create GUI
+	 */
+	GtkWidget *window;
+	GtkWidget *table;
+	GtkWidget *label1;
+
+	GtkWidget *button;
+	GtkWidget *halign;
+
+	gtk_init(&argc, &argv);
+
+	// janela
+
+	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+	gtk_window_set_title(GTK_WINDOW(window), "Earth Chat");
+	gtk_container_set_border_width(GTK_CONTAINER(window), 20);
+
+	table = gtk_table_new(3, 2, FALSE);
+	gtk_container_add(GTK_CONTAINER(window), table);
+
+	//  label e campo
+	label1 = gtk_label_new("Command/Message");
+	entry1 = gtk_entry_new();
+
+	gtk_table_attach(GTK_TABLE(table), label1, 0, 1, 2, 3,
+	  GTK_FILL | GTK_SHRINK, GTK_FILL | GTK_SHRINK, 5, 5);
+
+	gtk_table_attach(GTK_TABLE(table), entry1, 1, 2, 2, 3,
+	  GTK_FILL | GTK_SHRINK, GTK_FILL | GTK_SHRINK, 5, 5);
+
+	// botao
+
+	halign = gtk_alignment_new(0, 0, 0, 0);
+  	gtk_container_add(GTK_CONTAINER(table), halign);
+	button = gtk_button_new_with_label("Enviar");
+  	gtk_widget_set_size_request(button, 80, 30);
+	gtk_container_add(GTK_CONTAINER(halign), button);
+	g_signal_connect(button, "clicked", G_CALLBACK(sendButtonCallback), NULL);
 
 
-	while(in){
-		fflush(stdin);
-		fgets(text, MAX_MESSAGE_LENGTH, stdin);
-		if(text[0] == '*'){
-			switch(text[1]){
-				case '1':
-					printf("** Join room **\n");
-					joinRoom();
-					break;
-				case '2':
-					printf("** Leave room **\n");
-					leaveRoom();
-					break;
-				case '3':
-					printf("** Create room **\n");
-					createRoom();
-					break;
-				case '4':
-					setNick();
-					break;
-				case '5':
-					printf("** Request room list **\n");
-					requestRoomList();
-					break;
-				case '6':
-					closeConnection();
-					exit(0);
-				default:
-					break;
-			}
+
+	gtk_widget_show_all(window);
+	g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), &entry1);
+	gtk_main();
+
+	pthread_join(thread, NULL);
+
+	return 0;
+}
+
+void sendButtonCallback(GtkWidget *widget, gpointer data) {
+	const gchar *entry_text1;
+    GtkWidget* ld = (GtkWidget*)data;
+
+    entry_text1 = gtk_entry_get_text(GTK_ENTRY(entry1));
+
+	if (set_nick_action) {
+		setNick((char*)entry_text1);
+	}
+	else if (join_room_action) {
+		joinRoom((char*)entry_text1);
+	}
+	else if (create_room_action) {
+		createRoom((char*)entry_text1);
+	}
+	else {
+		doUserAction((char*)entry_text1);
+	}
+}
+
+void doUserAction(char *buffer) {
+	if(buffer[0] == '*'){
+		switch(buffer[1]){
+			case '1':
+				printf("** Join room **\n");
+				printf("Please enter the ID of the room you wish to enter.\n");
+				join_room_action = 1;
+				break;
+			case '2':
+				printf("** Leave room **\n");
+				leaveRoom();
+				break;
+			case '3':
+				printf("** Create room **\n");
+				printf("Please enter the room name.\n");
+				create_room_action = 1;
+				break;
+			case '4':
+				printf("** Set nickname **\n");
+				printf("Please enter your new nickname.\n");
+				set_nick_action = 1;
+				break;
+			case '5':
+				printf("** Request room list **\n");
+				requestRoomList();
+				break;
+			case '6':
+				closeConnection();
+				exit(0);
+			default:
+				break;
 		}
-		else {
-			if(enableToWrite){
-			//	printf("mensagem: %s\n", text);
-				if(strlen(text) <= MAX_MESSAGE_LENGTH){
-					MESSAGE *message = malloc(sizeof(MESSAGE));
-					message->clientId = ID;
-					message->tag = MESSAGE_TO_ROOM;
-					message->size = strlen(text) + sizeof(int) + sizeof(int);
-					message->roomId = selectedRoom;
-					strcpy(message->messageText, text);
+	}
+	else {
+		if(enableToWrite){
+			if(strlen(buffer) <= MAX_MESSAGE_LENGTH){
+				MESSAGE *message = malloc(sizeof(MESSAGE));
+				message->clientId = ID;
+				message->tag = MESSAGE_TO_ROOM;
+				message->size = strlen(buffer) + sizeof(int) + sizeof(int);
+				message->roomId = selectedRoom;
+				strcpy(message->messageText, buffer);
 
-					// envia para o socket de dados
-					confirm = write(s, message, sizeof(MESSAGE));
-					if (confirm < 0){
-						printf("Erro na transmissão\n");
-						close(s);
-						return;
-					}
-				//	printf("mensagem enviada %d\n", confirm);
-				}else{
-					printf("Warning: message is to big. \n");
+				// envia para o socket de dados
+				int confirm = write(s, message, sizeof(MESSAGE));
+				if (confirm < 0){
+					printf("Transmission error\n");
+					close(s);
+					return;
 				}
+			}else{
+				printf("Warning: message is too big. \n");
 			}
 		}
 	}
-
 }
 
 void socketReceiver(){
@@ -140,7 +207,7 @@ void socketReceiver(){
 	// enquanto nao tiver registro no socket de comando, nao abre o socket de dados
 	while(ID == -1);
 	if ((receiver = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET){
-		printf("Erro iniciando socket\n");
+		printf("Error when starting socket.\n");
 		return;
 	}
 
@@ -149,7 +216,7 @@ void socketReceiver(){
 	s_serv.sin_port = htons(DATA_SERVER_PORT);
 
 	if(connect(receiver, (struct sockaddr*)&s_serv, sizeof(s_serv)) != 0){
-		printf("Erro na conexao\n");
+		printf("Connection error.\n");
 		close(receiver);
 		exit(1);
 	}
@@ -163,7 +230,7 @@ void socketReceiver(){
 	// envia para o servidor
 	confirm = write(receiver, client, sizeof(CONFIRM_CLIENT_MESSAGE));
 	if (confirm < 0){
-		printf("Erro na transmissão\n");
+		printf("Transmissioon error\n");
 		close(receiver);
 		return;
 	}
@@ -248,22 +315,17 @@ int readServerResponse(int id){
 }
 
 
-void createRoom(){
+void createRoom(char *buffer){
 	char roomName[MAX_ROOM_NAME_LENGTH];
 	int package_length, confirm;
-	int notValidRoomName = 1;
 
-	do{
-		printf("Please enter room name: \n");
-		scanf("%s",roomName);
+	if (strlen(buffer) > MAX_ROOM_NAME_LENGTH-1) {
+		printf("Room name must have a maximum of %d characters.\n", MAX_ROOM_NAME_LENGTH-1);
+		printf("Please enter the room name.\n");
+		return;
+	}
 
-		if(strlen(roomName) > MAX_ROOM_NAME_LENGTH-1){
-			printf("\n Room name must have up to %d characters.\n", MAX_ROOM_NAME_LENGTH-1);
-		}else{
-			notValidRoomName = 0;
-		}
-	}while(notValidRoomName);
-
+	strcpy(roomName, buffer);
 
 	// seta tamanho dos pacotes
 	package_length = sizeof(int) + strlen(roomName)+1;
@@ -278,8 +340,9 @@ void createRoom(){
 	// envia para o servidor
 	confirm = write(s, create_message, sizeof(CREATE_ROOM_MESSAGE));
 	if (confirm < 0){
-		printf("Erro na transmissão\n");
+		printf("Transmission error\n");
 		close(s);
+		create_room_action=0;
 		return;
 	}
 
@@ -287,8 +350,9 @@ void createRoom(){
 		printf("Room created successfully.\n");
 	}
 	else {
-		printf("Server returned error.\n");
+		printf("Server returned error, please try again later.\n");
 	}
+	create_room_action=0;
 }
 
 void requestRoomList(){
@@ -306,12 +370,12 @@ void requestRoomList(){
 	// envia para o servidor
 	confirm = write(s, req_message, sizeof(REQUEST_ROOM_MESSAGE));
 	if (confirm < 0){
-		printf("Erro na transmissão.\n");
+		printf("Transmission error.\n");
 		close(s);
 		return;
 	}
 	if (readServerResponse(SAVE_NUMBER_OF_ROOMS) == 0) {
-		fprintf(stderr, "Erro ao ler resposta do servidor.\n");
+		fprintf(stderr, "Error when reading response from server.\n");
 		close(s);
 		return;
 	}
@@ -334,7 +398,7 @@ void leaveRoom(){
 		// envia para o servidor
 		confirm = write(s, leave_message, sizeof(LEAVE_MESSAGE));
 		if (confirm < 0){
-			printf("Erro na transmissão\n");
+			printf("Transmission error\n");
 			close(s);
 			return;
 		}
@@ -349,15 +413,14 @@ void leaveRoom(){
 	}
 }
 
-void joinRoom(){
+void joinRoom(char *buffer){
 	int i, find = 0, confirm;
 	int package_length;
 	char join_tag = 'J';
 
-	printf("Select a room:\n");
-	scanf("%d",&selectedRoom);
+	int room = (int)strtol(buffer, NULL, 10);
 	for(i=0; i<number_of_rooms; i++){
-		if(chat_room[i].roomId == selectedRoom){
+		if(chat_room[i].roomId == room){
 			find = 1;
 		}
 	}
@@ -369,26 +432,29 @@ void joinRoom(){
 		JOIN_MESSAGE *join_message = malloc(sizeof(JOIN_MESSAGE));
 		join_message->tag = JOIN_ROOM;
 		join_message->size = package_length;
-		join_message->room = selectedRoom;
+		join_message->room = room;
 		join_message->clientId = ID;
 
 		// envia para o servidor
 		confirm = write(s, join_message, sizeof(JOIN_MESSAGE));
 		if (confirm < 0){
-			printf("Erro na transmissão\n");
+			printf("Transmission error\n");
 			close(s);
 			return;
 		}
 		if(readServerResponse(CHECK_RESPONSE)){
 			printf("You entered in the room.\n");
+			selectedRoom = room;
 			enableToWrite = 1;
 		}
 	}
 	else {
-		printf("Selected room doesn't exist. \n");
-		selectedRoom = 0;
+		printf("Selected room wasn't found. Please try updating the rooms list and try again.\n");
+		selectedRoom = -1;
 	}
 
+	// Disable the callback flag
+	join_room_action = 0;
 }
 
 void printRooms(){
@@ -413,7 +479,7 @@ void printRooms(){
 }
 
 void requestRegister(){
-	char* nick_package;
+	char new_nick;
 	int package_length;
 	int confirm, notValidNick = 1;
 
@@ -441,7 +507,7 @@ void requestRegister(){
 	// envia para o servidor
 	confirm = write(s, request_message, sizeof(REQUEST_REGISTER));
 	if (confirm < 0){
-		printf("Erro na transmissão\n");
+		printf("Transmission error\n");
 		close(s);
 		return;
 	}
@@ -449,31 +515,25 @@ void requestRegister(){
 	if(readServerResponse(SAVE_CLIENT_ID)){
 		printf("You are registered.\n");
 	}else{
-		printf("Error: error to register, probably your nick already exists.\n");
+		printf("Error when registering, please try another nickname.\n");
 		requestRegister();
 	}
 
 }
-void setNick(){
-
-	char* nick_package;
+void setNick(char *buffer){
+	char new_nick[MAX_NICK_LENGTH];
 	int package_length;
-	int confirm, notValidNick = 1;
+	int confirm;
 
-	do{
-		printf("Please enter your nick name: \n");
-		scanf("%s",nick);
-
-		if(strlen(nick) > MAX_NICK_LENGTH){
-			printf("\n Nickname must have up to %d characters.\n", MAX_NICK_LENGTH);
-		}else{
-			notValidNick = 0;
-		}
-	}while(notValidNick);
-
+	if (strlen(buffer) > (MAX_NICK_LENGTH-1)) {
+		printf("Nickname must have a maximum of %d characters.\n", MAX_NICK_LENGTH-1);
+		printf("Please enter a new nickname.\n");
+		return;
+	}
+	strcpy(new_nick, buffer);
 
 	// seta tamanho dos pacotes
-	package_length = sizeof(int) + strlen(nick);
+	package_length = sizeof(int) + strlen(new_nick);
 	//printf("tamanho pacote: %d\n", package_length);
 
 	// concatena informacoes do pacote
@@ -481,28 +541,31 @@ void setNick(){
 	nick_message->tag = SET_NICK;
 	nick_message->size = package_length;
 	nick_message->clientId = ID;
-	strcpy(nick_message->nick, nick);
+	strcpy(nick_message->nick, new_nick);
 
 	// envia para o servidor
 	confirm = write(s, nick_message, sizeof(NICK_MESSAGE));
 	if (confirm < 0){
-		printf("Erro na transmissão\n");
+		printf("Transmission error\n");
 		close(s);
+		set_nick_action=0;
 		return;
 	}
 
 	if (readServerResponse(CHECK_RESPONSE)) {
+		strcpy(nick, new_nick);
 		printf("Nickname changed.\n");
 	}
 	else {
-		fprintf(stderr, "Server replied error.\n");
+		fprintf(stderr, "Server replied error, please try again later.\n");
 	}
+	set_nick_action=0;
 }
 
 void connectToServer(){
 
 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET){
-		printf("Erro iniciando socket\n");
+		printf("Error when starting socket.\n");
 		return;
 	}
 
@@ -511,7 +574,7 @@ void connectToServer(){
 	s_serv.sin_port = htons(SERVER_PORT);
 
 	if(connect(s, (struct sockaddr*)&s_serv, sizeof(s_serv)) != 0){
-		printf("Erro na conexao\n");
+		printf("Connection error.\n");
 		close(s);
 		exit(1);
 	}
@@ -528,16 +591,12 @@ void closeConnection(){
 	// envia para o servidor
 	confirm = write(s, close_message, sizeof(CLOSE_CHAT_MESSAGE));
 	if (confirm < 0){
-		printf("Erro na transmissão\n");
+		printf("Transmission error\n");
 		close(s);
 		return;
 	}
 
 	close(s);
-	printf("Nice to meet you! Come back soon!!");
+	printf("Nice to see you! Come back soon!!\n");
 
 }
-
-
-
-
