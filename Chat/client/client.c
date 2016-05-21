@@ -25,7 +25,6 @@ void setNick(char *buffer);
 void socketReceiver();
 void printRooms();
 void joinRoom(char *buffer);
-void userActions(GtkWidget *widget, gpointer data);
 void leaveRoom();
 void requestRoomList();
 void requestRegister();
@@ -123,7 +122,7 @@ int main (int argc, char **argv){
 
 	gtk_container_add(GTK_CONTAINER(halign), button);
 
-	g_signal_connect(button, "clicked", G_CALLBACK(userActions), NULL);
+	g_signal_connect(button, "clicked", G_CALLBACK(sendButtonCallback), NULL);
 
 
 	// finalizacao
