@@ -25,6 +25,7 @@ void setNick(char *buffer);
 void socketReceiver();
 void printRooms();
 void joinRoom(char *buffer);
+void userActions(GtkWidget *widget, gpointer data);
 void leaveRoom();
 void requestRoomList();
 void requestRegister();
@@ -50,9 +51,11 @@ int enableToWrite = 0;
 unsigned int set_nick_action=0, join_room_action=0, create_room_action=0;
 
 GtkWidget *entry1;
+/* Para rodar: gcc -o client client.c `pkg-config --libs --cflags gtk+-2.0` -lpthread  */
 
 
 int main (int argc, char **argv){
+
 	pthread_t thread;
 
 	connectToServer();
@@ -73,8 +76,9 @@ int main (int argc, char **argv){
 	printf("*6 - exit Earth chat\n");
 
 	/*
-	 * Create GUI
-	 */
+	* Tela de input
+	*/
+
 	GtkWidget *window;
 	GtkWidget *table;
 	GtkWidget *label1;
@@ -91,7 +95,8 @@ int main (int argc, char **argv){
 	gtk_window_set_title(GTK_WINDOW(window), "Earth Chat");
 	gtk_container_set_border_width(GTK_CONTAINER(window), 20);
 
-	table = gtk_table_new(3, 2, FALSE);
+
+	table = gtk_table_new(3, 3, FALSE);
 	gtk_container_add(GTK_CONTAINER(window), table);
 
 	//  label e campo
@@ -108,20 +113,33 @@ int main (int argc, char **argv){
 
 	halign = gtk_alignment_new(0, 0, 0, 0);
   	gtk_container_add(GTK_CONTAINER(table), halign);
+
+
 	button = gtk_button_new_with_label("Enviar");
-  	gtk_widget_set_size_request(button, 80, 30);
+	gtk_widget_set_size_request(button, 80, 30);
+
+	gtk_table_attach(GTK_TABLE(table), button, 2, 3, 2, 3,
+	  GTK_FILL | GTK_SHRINK, GTK_FILL | GTK_SHRINK, 5, 5);
+
 	gtk_container_add(GTK_CONTAINER(halign), button);
-	g_signal_connect(button, "clicked", G_CALLBACK(sendButtonCallback), NULL);
+
+	g_signal_connect(button, "clicked", G_CALLBACK(userActions), NULL);
 
 
+	// finalizacao
 
 	gtk_widget_show_all(window);
-	g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), &entry1);
+
+	g_signal_connect(window, "destroy",
+	  G_CALLBACK(gtk_main_quit), &entry1);
+
 	gtk_main();
+	/*
+	* Final tela de input
+	*/
+
 
 	pthread_join(thread, NULL);
-
-	return 0;
 }
 
 void sendButtonCallback(GtkWidget *widget, gpointer data) {
@@ -201,7 +219,7 @@ void doUserAction(char *buffer) {
 	}
 }
 
-void socketReceiver(){
+void socketReceiver() {
 	int confirm;
 	char firstByte[1];
 	// enquanto nao tiver registro no socket de comando, nao abre o socket de dados
