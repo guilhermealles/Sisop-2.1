@@ -219,6 +219,7 @@ void* connection_thread(void* args) {
 			case CLOSE_CHAT:
 				pthread_mutex_lock(&handlerMutex);
 				handleDisconnectClient(buffer);
+				disconnectedClient = 1;
 				pthread_mutex_unlock(&handlerMutex);
 				break;
 			 default:
@@ -265,7 +266,7 @@ void* connection_thread(void* args) {
 		}
 	}
 
-	// Close the socket and free allocated memory
+	//Close the socket and free allocated memory
 	//close(messageSocket);
 	//free(messageSocket_p);
 	//free(clientAddr_p);
