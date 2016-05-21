@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include "../interface.h"
 #include <pthread.h>
+#include <gtk/gtk.h>
 
 #define	SOCKET	int
 #define INVALID_SOCKET  ((SOCKET)~0)
@@ -21,7 +22,7 @@ void connectToServer();
 void setNick();
 void socketReceiver();
 void printRooms();
-void userActions();
+void userActions(GtkWidget *widget, gpointer data);
 void joinRoom();
 void leaveRoom();
 void requestRoomList();
@@ -43,9 +44,14 @@ int number_of_rooms = 0;
 int selectedRoom = -1;
 int enableToWrite = 0;
 
+/* Para rodar: gcc -o simple testeG.c `pkg-config --libs --cflags gtk+-2.0`  */
+
+GtkWidget *entry1;
+
 
 
 int main (int argc, char **argv){
+
 	pthread_t thread;
 
 	connectToServer();
@@ -56,16 +62,7 @@ int main (int argc, char **argv){
 		fprintf(stderr, "Error when creating a thread.\n");
 		exit(EXIT_FAILURE);
 	}
-	userActions();
-
-	pthread_join(thread, NULL);
-}
-
-void userActions(){
-
-	char text[MAX_MESSAGE_LENGTH];
-	int in = 1, confirm;
-
+	
 	printf("Commands: \n");
 	printf("*1 - join into a room chat\n");
 	printf("*2 - leave a room chat\n");
@@ -74,10 +71,90 @@ void userActions(){
 	printf("*5 - list rooms\n");
 	printf("*6 - exit from Earth chat\n");
 
+/*
+* Tela de input
+*/
+	GtkWidget *window;
+	GtkWidget *table;
+	GtkWidget *label1;
 
-	while(in){
-		fflush(stdin);
-		fgets(text, MAX_MESSAGE_LENGTH, stdin);
+	GtkWidget *button;
+	GtkWidget *halign;
+
+	gtk_init(&argc, &argv);
+
+	// janela
+
+	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+	gtk_window_set_title(GTK_WINDOW(window), "Earth Chat");
+	gtk_container_set_border_width(GTK_CONTAINER(window), 20);
+
+	table = gtk_table_new(3, 3, FALSE);
+	gtk_container_add(GTK_CONTAINER(window), table);
+
+	//  label e campo
+	label1 = gtk_label_new("Command/Message");
+	entry1 = gtk_entry_new();
+		
+
+	gtk_table_attach(GTK_TABLE(table), label1, 0, 1, 2, 3, 
+	  GTK_FILL | GTK_SHRINK, GTK_FILL | GTK_SHRINK, 5, 5);
+
+	gtk_table_attach(GTK_TABLE(table), entry1, 1, 2, 2, 3, 
+	  GTK_FILL | GTK_SHRINK, GTK_FILL | GTK_SHRINK, 5, 5);
+
+	// botao
+
+	halign = gtk_alignment_new(0, 0, 0, 0);
+  	gtk_container_add(GTK_CONTAINER(table), halign);
+
+	button = gtk_button_new_with_label("Enviar");
+  	gtk_widget_set_size_request(button, 80, 30);
+
+	gtk_table_attach(GTK_TABLE(table), button, 2, 3, 2, 3, 
+	  GTK_FILL | GTK_SHRINK, GTK_FILL | GTK_SHRINK, 5, 5);
+
+	gtk_container_add(GTK_CONTAINER(halign), button);
+
+	g_signal_connect(button, "clicked", G_CALLBACK(userActions), NULL);  
+
+
+	// finalizacao
+
+	gtk_widget_show_all(window);
+
+	g_signal_connect(window, "destroy",
+	  G_CALLBACK(gtk_main_quit), &entry1);
+
+	gtk_main();
+/*
+* Final tela de input
+*/
+
+
+	pthread_join(thread, NULL);
+}
+
+void userActions(GtkWidget *widget, gpointer data){
+
+	char text[MAX_MESSAGE_LENGTH];
+	int in = 1, confirm, i;
+
+	const gchar *entry_text1;
+	GtkWidget* ld = (GtkWidget*)data;
+
+	entry_text1 = gtk_entry_get_text(GTK_ENTRY(entry1));
+
+	for(i=0; i< MAX_MESSAGE_LENGTH; i++){
+		text[i] = entry_text1[i];
+	}
+
+//	g_print ("Mensage:%s\n", text);
+
+//	while(in){
+		//fflush(stdin);
+		//fgets(text, MAX_MESSAGE_LENGTH, stdin);
 		if(text[0] == '*'){
 			switch(text[1]){
 				case '1':
@@ -130,7 +207,7 @@ void userActions(){
 				}
 			}
 		}
-	}
+//	}
 
 }
 
