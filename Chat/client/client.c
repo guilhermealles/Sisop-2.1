@@ -91,7 +91,7 @@ int main (int argc, char **argv){
 
 	table = gtk_table_new(3, 2, FALSE);
 	gtk_container_add(GTK_CONTAINER(window), table);
-
+	
 	tableInside = gtk_table_new(2,1,FALSE);
 	gtk_container_add(GTK_CONTAINER(table), tableInside);
 
@@ -117,7 +117,7 @@ int main (int argc, char **argv){
 	gtk_table_attach(GTK_TABLE(table), button, 1, 2, 2, 3,
 	  GTK_FILL | GTK_SHRINK, GTK_FILL | GTK_SHRINK, 5, 5);
 
-	gtk_container_add(GTK_CONTAINER(table), button);
+	//gtk_container_add(GTK_CONTAINER(table), button);
 
 	g_signal_connect(button, "clicked", G_CALLBACK(sendButtonCallback), NULL);
 
