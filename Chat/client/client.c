@@ -117,8 +117,6 @@ int main (int argc, char **argv){
 	gtk_table_attach(GTK_TABLE(table), button, 1, 2, 2, 3,
 	  GTK_FILL | GTK_SHRINK, GTK_FILL | GTK_SHRINK, 5, 5);
 
-	//gtk_container_add(GTK_CONTAINER(table), button);
-
 	g_signal_connect(button, "clicked", G_CALLBACK(sendButtonCallback), NULL);
 
 
@@ -274,7 +272,7 @@ void socketReceiver() {
 			}
 
 			MESSAGE *message = (MESSAGE *)buffer;
-			if(message->roomId == selectedRoom){
+			if(message->roomId == selectedRoom && enableToWrite){
 				while(notFound){
 					if(chat_room[i].roomId == selectedRoom){
 						notFound = 0;
@@ -404,7 +402,6 @@ void leaveRoom(){
 
 	if(selectedRoom != -1){
 		package_length = 0;
-		enableToWrite = 0;
 
 		// concatena informacoes do pacote
 		LEAVE_MESSAGE *leave_message = malloc(sizeof(LEAVE_MESSAGE));
@@ -420,15 +417,16 @@ void leaveRoom(){
 			return;
 		}
 
-		
-		strcat(nick, " saiu do chat");
+		char msg_out[strlen(nick) + strlen(" saiu do chat")];
+		strcat(msg_out, nick);
+		strcat(msg_out, " saiu do chat");
 
 		MESSAGE *message = malloc(sizeof(MESSAGE));
 		message->clientId = ID;
 		message->tag = MESSAGE_TO_ROOM;
-		message->size = strlen(nick) + sizeof(int) + sizeof(int);
+		message->size = strlen(msg_out) + sizeof(int) + sizeof(int);
 		message->roomId = selectedRoom;
-		strcpy(message->messageText, nick);
+		strcpy(message->messageText, msg_out);
 
 		// envia para o socket de dados
 		int confirm = write(s, message, sizeof(MESSAGE));
@@ -439,9 +437,11 @@ void leaveRoom(){
 		}
 
 		if(readServerResponse(CHECK_RESPONSE)){
-			printf("\nYou left the room successfully.\n");
+			printf("You left the room successfully.\n");
 			
 		}
+		
+		enableToWrite = 0;
 	}
 }
 
@@ -475,7 +475,7 @@ void joinRoom(char *buffer){
 			return;
 		}
 		if(readServerResponse(CHECK_RESPONSE)){
-			printf("You entered in the room.\n");
+			printf("You entered in the room!!\nStart talking:\n\n");
 			selectedRoom = room;
 			enableToWrite = 1;
 		}
