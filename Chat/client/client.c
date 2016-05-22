@@ -59,20 +59,12 @@ int main (int argc, char **argv){
 
 	connectToServer();
 
-	printf("Welcome to Earth chat!!!\n");
+	printf("\nWelcome to Earth chat!!!\n\n");
 	requestRegister();
 	if (pthread_create(&thread, NULL, (void *)socketReceiver, NULL) != 0) {
 		fprintf(stderr, "Error when creating a thread.\n");
 		exit(EXIT_FAILURE);
 	}
-
-	printf("Commands: \n");
-	printf("*1 - join a chat room\n");
-	printf("*2 - leave a chat room\n");
-	printf("*3 - create a chat room\n");
-	printf("*4 - change nickname\n");
-	printf("*5 - list chat rooms\n");
-	printf("*6 - exit Earth chat\n");
 
 	/*
 	* Tela de input
@@ -80,10 +72,12 @@ int main (int argc, char **argv){
 
 	GtkWidget *window;
 	GtkWidget *table;
-	GtkWidget *label1;
-
+	GtkWidget *tableInside;
+	GtkWidget *description;
 	GtkWidget *button;
-	GtkWidget *halign;
+	PangoFontDescription *df;
+
+	df = pango_font_description_from_string("Monospace");
 
 	gtk_init(&argc, &argv);
 
@@ -95,32 +89,35 @@ int main (int argc, char **argv){
 	gtk_container_set_border_width(GTK_CONTAINER(window), 20);
 
 
-	table = gtk_table_new(3, 3, FALSE);
+	table = gtk_table_new(3, 2, FALSE);
 	gtk_container_add(GTK_CONTAINER(window), table);
 
+	tableInside = gtk_table_new(2,1,FALSE);
+	gtk_container_add(GTK_CONTAINER(table), tableInside);
+
 	//  label e campo
-	label1 = gtk_label_new("Command/Message");
+	description = gtk_label_new("       Commands   \n\n *1 - Join a chat room\n *2 - Leave a chat room\n *3 - Create a chat room\n *4 - Change nickname\n *5 - List chat rooms\n *6 - Exit Earth chat\n");
+
 	entry1 = gtk_entry_new();
 
-	gtk_table_attach(GTK_TABLE(table), label1, 0, 1, 2, 3,
+	pango_font_description_set_size(df,10*PANGO_SCALE);
+	gtk_widget_modify_font(description, df);
+
+	gtk_table_attach(GTK_TABLE(tableInside), description, 1,2,1,2,
 	  GTK_FILL | GTK_SHRINK, GTK_FILL | GTK_SHRINK, 5, 5);
 
-	gtk_table_attach(GTK_TABLE(table), entry1, 1, 2, 2, 3,
+	gtk_table_attach(GTK_TABLE(table), entry1, 0, 1, 2, 3,
 	  GTK_FILL | GTK_SHRINK, GTK_FILL | GTK_SHRINK, 5, 5);
 
 	// botao
 
-	halign = gtk_alignment_new(0, 0, 0, 0);
-  	gtk_container_add(GTK_CONTAINER(table), halign);
-
-
 	button = gtk_button_new_with_label("Enviar");
 	gtk_widget_set_size_request(button, 80, 30);
 
-	gtk_table_attach(GTK_TABLE(table), button, 2, 3, 2, 3,
+	gtk_table_attach(GTK_TABLE(table), button, 1, 2, 2, 3,
 	  GTK_FILL | GTK_SHRINK, GTK_FILL | GTK_SHRINK, 5, 5);
 
-	gtk_container_add(GTK_CONTAINER(halign), button);
+	gtk_container_add(GTK_CONTAINER(table), button);
 
 	g_signal_connect(button, "clicked", G_CALLBACK(sendButtonCallback), NULL);
 
@@ -143,9 +140,9 @@ int main (int argc, char **argv){
 
 void sendButtonCallback(GtkWidget *widget, gpointer data) {
 	const gchar *entry_text1;
-    GtkWidget* ld = (GtkWidget*)data;
+	GtkWidget* ld = (GtkWidget*)data;
 
-    entry_text1 = gtk_entry_get_text(GTK_ENTRY(entry1));
+	entry_text1 = gtk_entry_get_text(GTK_ENTRY(entry1));
 
 	if (set_nick_action) {
 		setNick((char*)entry_text1);
@@ -159,32 +156,34 @@ void sendButtonCallback(GtkWidget *widget, gpointer data) {
 	else {
 		doUserAction((char*)entry_text1);
 	}
+	gtk_entry_set_text((GtkEntry*)entry1, "");
+
 }
 
 void doUserAction(char *buffer) {
 	if(buffer[0] == '*'){
 		switch(buffer[1]){
 			case '1':
-				printf("** Join room **\n");
+				printf("\n** Join room **\n\n");
 				printf("Please enter the ID of the room you wish to enter.\n");
 				join_room_action = 1;
 				break;
 			case '2':
-				printf("** Leave room **\n");
+				printf("\n** Leave room **\n\n");
 				leaveRoom();
 				break;
 			case '3':
-				printf("** Create room **\n");
+				printf("\n** Create room **\n\n");
 				printf("Please enter the room name.\n");
 				create_room_action = 1;
 				break;
 			case '4':
-				printf("** Set nickname **\n");
+				printf("\n** Set nickname **\n\n");
 				printf("Please enter your new nickname.\n");
 				set_nick_action = 1;
 				break;
 			case '5':
-				printf("** Request room list **\n");
+				printf("\n** Request room list **\n\n");
 				requestRoomList();
 				break;
 			case '6':
@@ -311,11 +310,11 @@ int readServerResponse(int id){
 		if (response->response == SERV_REPLY_OK) {
 			if (id == SAVE_CLIENT_ID) {
 				ID = (int) strtol(response->message, NULL, 10);
-				printf("Reply from server:\n\tID: %d.\n", ID);
+				//printf("Reply from server:\n\tID: %d.\n", ID);
 			}
 			else if (id == SAVE_NUMBER_OF_ROOMS) {
 				number_of_rooms = (int) strtol(response->message, NULL, 10);
-				printf("Reply from server:\n\tNumber of rooms: %d.\n", number_of_rooms);
+				printf("Number of rooms: %d.\n", number_of_rooms);
 			}
 			return 1;
 		}
@@ -421,11 +420,11 @@ void leaveRoom(){
 		}
 
 		if(readServerResponse(CHECK_RESPONSE)){
-			printf("You left the room successfully.\n");
+			printf("\nYou left the room successfully.\n");
 			enableToWrite = 0;
 		}
 		else{
-			printf("You're already outside the room.\n");
+			printf("\nYou're already outside the room.\n");
 		}
 	}
 }
@@ -481,7 +480,7 @@ void printRooms(){
 	while (bytes_read < (sizeof(CHAT_ROOM)*number_of_rooms)) {
 		int current_bytes_read = read(s, &buffer[bytes_read], sizeof(CHAT_ROOM));
 		bytes_read += current_bytes_read;
-		printf("bytes read %d \n", bytes_read);
+		//printf("bytes read %d \n", bytes_read);
 	}
 	// Here all the rooms should have already been read
 	chat_room = malloc(sizeof(CHAT_ROOM) * number_of_rooms);
@@ -530,7 +529,7 @@ void requestRegister(){
 	}
 
 	if(readServerResponse(SAVE_CLIENT_ID)){
-		printf("You are registered.\n");
+		printf("\nYou are registered.\n");
 	}else{
 		printf("Error when registering, please try another nickname.\n");
 		requestRegister();

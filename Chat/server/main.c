@@ -93,8 +93,8 @@ void* connection_thread(void* args) {
 	char *arguments = (char*) args;
 	int *messageSocket_p = (int*) &arguments[0];
 	int messageSocket = *messageSocket_p;
-	struct sockaddr *clientAddr_p = (struct sockaddr *) &arguments[sizeof(int)];
-	struct sockaddr clientAddr = *clientAddr_p;
+	//struct sockaddr *clientAddr_p = (struct sockaddr *) &arguments[sizeof(int)];
+	//struct sockaddr clientAddr = *clientAddr_p;
 	printf("[THREAD] Will try to read message from socket %d.\n", messageSocket);
 
 	char buffer[READ_BUFFER_SIZE];
@@ -163,7 +163,7 @@ void* connection_thread(void* args) {
 		int serverResponse = SERV_REPLY_FAIL;
 		int servListRooms=0;
 		extern pthread_mutex_t handlerMutex;
-		extern int registeredClientsCount;
+		//extern int registeredClientsCount;
 		extern int registeredRoomsCount;
 		// Start building the response
 		SERVER_RESPONSE *response = malloc(sizeof(SERVER_RESPONSE));

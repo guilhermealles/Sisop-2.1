@@ -22,7 +22,7 @@ int handleRegisterClient(char *buffer) {
         fprintf(stderr, "[THREAD] Error when registering user with nick %s. Probably nick already in use.\n", message->nick);
         return SERV_REPLY_FAIL;
     }
-    extern CLIENT* clientsArray;
+ //   extern CLIENT* clientsArray;
     printf("[THREAD] Registered new user\n\t\tNick: %s\n\t\tClientId: %d\n", message->nick, clientId);
     return clientId;
 }
