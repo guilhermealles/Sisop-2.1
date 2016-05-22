@@ -59,7 +59,7 @@ int main (int argc, char **argv){
 
 	connectToServer();
 
-	printf("Welcome to Earth chat!!!\n\n");
+	printf("\nWelcome to Earth chat!!!\n");
 	requestRegister();
 	if (pthread_create(&thread, NULL, (void *)socketReceiver, NULL) != 0) {
 		fprintf(stderr, "Error when creating a thread.\n");
