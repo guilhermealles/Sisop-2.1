@@ -33,7 +33,7 @@ int readServerResponse(int id);
 void closeConnection();
 
 SOCKET s, receiver;
-CHAT_ROOM *chat_room;
+CHAT_ROOM *chat_rooms = NULL;
 struct sockaddr_in  s_cli, s_serv;
 
 int ID = -1;
@@ -59,7 +59,7 @@ int main (int argc, char **argv){
 
 	connectToServer();
 
-	printf("\nWelcome to Earth chat!!!\n\n");
+	printf("Welcome to Earth chat!!!\n\n");
 	requestRegister();
 	if (pthread_create(&thread, NULL, (void *)socketReceiver, NULL) != 0) {
 		fprintf(stderr, "Error when creating a thread.\n");
@@ -91,7 +91,7 @@ int main (int argc, char **argv){
 
 	table = gtk_table_new(3, 2, FALSE);
 	gtk_container_add(GTK_CONTAINER(window), table);
-	
+
 	tableInside = gtk_table_new(2,1,FALSE);
 	gtk_container_add(GTK_CONTAINER(table), tableInside);
 
@@ -203,6 +203,7 @@ void doUserAction(char *buffer) {
 
 				// envia para o socket de dados
 				int confirm = write(s, message, sizeof(MESSAGE));
+				free(message);
 				if (confirm < 0){
 					printf("Transmission error\n");
 					close(s);
@@ -243,6 +244,7 @@ void socketReceiver() {
 
 	// envia para o servidor
 	confirm = write(receiver, client, sizeof(CONFIRM_CLIENT_MESSAGE));
+	free(client);
 	if (confirm < 0){
 		printf("Transmissioon error\n");
 		close(receiver);
@@ -274,13 +276,13 @@ void socketReceiver() {
 			MESSAGE *message = (MESSAGE *)buffer;
 			if(message->roomId == selectedRoom && enableToWrite){
 				while(notFound){
-					if(chat_room[i].roomId == selectedRoom){
+					if(chat_rooms[i].roomId == selectedRoom){
 						notFound = 0;
 					}else{
 						i++;
 					}
 				}
-				printf("%s @ %s: %s\n", message->senderNick, chat_room[i].roomName, message->messageText);
+				printf("%s @ %s: %s\n", message->senderNick, chat_rooms[i].roomName, message->messageText);
 			}
 		}
 	}
@@ -353,6 +355,7 @@ void createRoom(char *buffer){
 
 	// envia para o servidor
 	confirm = write(s, create_message, sizeof(CREATE_ROOM_MESSAGE));
+	free(create_message);
 	if (confirm < 0){
 		printf("Transmission error\n");
 		close(s);
@@ -383,6 +386,7 @@ void requestRoomList(){
 
 	// envia para o servidor
 	confirm = write(s, req_message, sizeof(REQUEST_ROOM_MESSAGE));
+	free(req_message);
 	if (confirm < 0){
 		printf("Transmission error.\n");
 		close(s);
@@ -411,6 +415,7 @@ void leaveRoom(){
 
 		// envia para o servidor
 		confirm = write(s, leave_message, sizeof(LEAVE_MESSAGE));
+		free(leave_message);
 		if (confirm < 0){
 			printf("Transmission error\n");
 			close(s);
@@ -430,6 +435,7 @@ void leaveRoom(){
 
 		// envia para o socket de dados
 		int confirm = write(s, message, sizeof(MESSAGE));
+		free(message);
 		if (confirm < 0){
 			printf("Transmission error\n");
 			close(s);
@@ -438,9 +444,9 @@ void leaveRoom(){
 
 		if(readServerResponse(CHECK_RESPONSE)){
 			printf("You left the room successfully.\n");
-			
+
 		}
-		
+
 		enableToWrite = 0;
 	}
 }
@@ -452,7 +458,7 @@ void joinRoom(char *buffer){
 
 	int room = (int)strtol(buffer, NULL, 10);
 	for(i=0; i<number_of_rooms; i++){
-		if(chat_room[i].roomId == room){
+		if(chat_rooms[i].roomId == room){
 			find = 1;
 		}
 	}
@@ -469,6 +475,7 @@ void joinRoom(char *buffer){
 
 		// envia para o servidor
 		confirm = write(s, join_message, sizeof(JOIN_MESSAGE));
+		free(join_message);
 		if (confirm < 0){
 			printf("Transmission error\n");
 			close(s);
@@ -498,14 +505,17 @@ void printRooms(){
 		bytes_read += current_bytes_read;
 		//printf("bytes read %d \n", bytes_read);
 	}
+	if (chat_rooms != NULL) {
+		free(chat_rooms);
+	}
 	// Here all the rooms should have already been read
-	chat_room = malloc(sizeof(CHAT_ROOM) * number_of_rooms);
+	chat_rooms = malloc(sizeof(CHAT_ROOM) * number_of_rooms);
 	int i=0;
 	for(i=0; i<number_of_rooms; i++) {
 		unsigned int buffer_offset = i * sizeof(CHAT_ROOM);
 		CHAT_ROOM *room = (CHAT_ROOM*) &buffer[buffer_offset];
-		chat_room[i].roomId = room->roomId;
-		strcpy(chat_room[i].roomName, room->roomName);
+		chat_rooms[i].roomId = room->roomId;
+		strcpy(chat_rooms[i].roomName, room->roomName);
 		printf("\tRoom %d - %s\n", room->roomId, room->roomName);
 	}
 }
@@ -538,6 +548,7 @@ void requestRegister(){
 
 	// envia para o servidor
 	confirm = write(s, request_message, sizeof(REQUEST_REGISTER));
+	free(request_message);
 	if (confirm < 0){
 		printf("Transmission error\n");
 		close(s);
@@ -546,6 +557,7 @@ void requestRegister(){
 
 	if(readServerResponse(SAVE_CLIENT_ID)){
 		printf("\nYou are registered.\n");
+		requestRoomList();
 	}else{
 		printf("Error when registering, please try another nickname.\n");
 		requestRegister();
@@ -577,6 +589,7 @@ void setNick(char *buffer){
 
 	// envia para o servidor
 	confirm = write(s, nick_message, sizeof(NICK_MESSAGE));
+	free(nick_message);
 	if (confirm < 0){
 		printf("Transmission error\n");
 		close(s);
@@ -622,6 +635,7 @@ void closeConnection(){
 
 	// envia para o servidor
 	confirm = write(s, close_message, sizeof(CLOSE_CHAT_MESSAGE));
+	free(close_message);
 	if (confirm < 0){
 		printf("Transmission error\n");
 		close(s);

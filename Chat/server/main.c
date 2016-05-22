@@ -68,17 +68,11 @@ int main (int argc, char **argv) {
 		}
 		printf("Connection accepted. Creating thread to handle message on socket %d...\n", messageSocket);
 
-		// Malloc a void* variable,
-		// First 4 bytes contains an int with the messageSocket descriptor
-		// Remaining bytes are the cliAddr structure
-		char *thread_args = (char*) malloc(sizeof(int) + sizeof(struct sockaddr));
-		int *firstArg = (int*)&thread_args[0];
-		struct sockaddr *secondArg = (struct sockaddr *) &thread_args[sizeof(int)];
-		*firstArg = messageSocket;
-		memcpy(secondArg, (void*) &clientAddr, clientLength);
 
+		int *threadArg = (int*) malloc(sizeof(int));
+		*threadArg = messageSocket;
 		pthread_t thread;
-		if (pthread_create(&thread, NULL, (void *)connection_thread, (void*) thread_args) != 0) {
+		if (pthread_create(&thread, NULL, (void *)connection_thread, (void*) threadArg) != 0) {
 			fprintf(stderr, "Error when creating a connection thread.\n");
 			exit(EXIT_FAILURE);
 		}
@@ -89,12 +83,10 @@ int main (int argc, char **argv) {
 }
 
 void* connection_thread(void* args) {
-	// Unwrap arguments
-	char *arguments = (char*) args;
-	int *messageSocket_p = (int*) &arguments[0];
+	// Unwrap argument
+	int *messageSocket_p = (int*)args;
 	int messageSocket = *messageSocket_p;
-	//struct sockaddr *clientAddr_p = (struct sockaddr *) &arguments[sizeof(int)];
-	//struct sockaddr clientAddr = *clientAddr_p;
+	free(args);
 	printf("[THREAD] Will try to read message from socket %d.\n", messageSocket);
 
 	char buffer[READ_BUFFER_SIZE];
@@ -161,9 +153,8 @@ void* connection_thread(void* args) {
 		}
 
 		int serverResponse = SERV_REPLY_FAIL;
-		int servListRooms=0;
+		int servListRooms=0, disconnectClient=0;
 		extern pthread_mutex_t handlerMutex;
-		//extern int registeredClientsCount;
 		extern int registeredRoomsCount;
 		// Start building the response
 		SERVER_RESPONSE *response = malloc(sizeof(SERVER_RESPONSE));
@@ -218,6 +209,7 @@ void* connection_thread(void* args) {
 				break;
 			case CLOSE_CHAT:
 				pthread_mutex_lock(&handlerMutex);
+				disconnectClient=1;
 				handleDisconnectClient(buffer);
 				pthread_mutex_unlock(&handlerMutex);
 				break;
@@ -230,10 +222,10 @@ void* connection_thread(void* args) {
 		// Finish building response
 		response->response = serverResponse;
 		int confirm = write(messageSocket, response, sizeof(SERVER_RESPONSE));
-		if (confirm < 0) {
-			fprintf(stderr, "[THREAD] Error sending reply to client");
+		free(response);
+		if ((confirm < 0) && (disconnectClient==1)) {
+			fprintf(stderr, "[THREAD] ERROR sending reply to client");
 			close(messageSocket);
-			exit(EXIT_FAILURE);
 		}
 		else {
 			printf("[THREAD] Sent reply to client. Confirm = %d\n", confirm);
@@ -265,11 +257,6 @@ void* connection_thread(void* args) {
 		}
 	}
 
-	//Close the socket and free allocated memory
-	//close(messageSocket);
-	//free(messageSocket_p);
-	//free(clientAddr_p);
-	//free(response);
 
 	return 0;
 }
