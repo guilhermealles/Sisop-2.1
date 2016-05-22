@@ -404,6 +404,7 @@ void leaveRoom(){
 
 	if(selectedRoom != -1){
 		package_length = 0;
+		enableToWrite = 0;
 
 		// concatena informacoes do pacote
 		LEAVE_MESSAGE *leave_message = malloc(sizeof(LEAVE_MESSAGE));
@@ -419,12 +420,27 @@ void leaveRoom(){
 			return;
 		}
 
+		
+		strcat(nick, " saiu do chat");
+
+		MESSAGE *message = malloc(sizeof(MESSAGE));
+		message->clientId = ID;
+		message->tag = MESSAGE_TO_ROOM;
+		message->size = strlen(nick) + sizeof(int) + sizeof(int);
+		message->roomId = selectedRoom;
+		strcpy(message->messageText, nick);
+
+		// envia para o socket de dados
+		int confirm = write(s, message, sizeof(MESSAGE));
+		if (confirm < 0){
+			printf("Transmission error\n");
+			close(s);
+			return;
+		}
+
 		if(readServerResponse(CHECK_RESPONSE)){
 			printf("\nYou left the room successfully.\n");
-			enableToWrite = 0;
-		}
-		else{
-			printf("\nYou're already outside the room.\n");
+			
 		}
 	}
 }
