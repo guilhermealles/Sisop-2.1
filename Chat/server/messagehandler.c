@@ -51,6 +51,7 @@ int handleLeaveRoom(char *buffer) {
         fprintf(stderr, "[THREAD] Error when removing client %d from room.\n", message->clientId);
         return SERV_REPLY_FAIL;
     }
+	leaveRoom(message->clientId);
     return SERV_REPLY_OK;
 }
 
@@ -78,10 +79,10 @@ int handleMessageToRoom(char *buffer) {
     }
     strcpy(message->senderNick, clientsArray[message->clientId].nick);
 
-    printf("Client \"%s\" sent message to room %d. Message:\n\"%s\".\n", message->nick, message->roomId, message->messageText);
+    printf("Client \"%s\" sent message to room %d. Message:\n\"%s\".\n", message->senderNick, message->roomId, message->messageText);
     int i;
     for(i=0; i<registeredClientsCount; i++) {
-     //   if (clientsArray[i].chatRoom == message->roomId) {
+        if (clientsArray[i].clientId != -1) {
             // Send the message to this client.
             if (clientsArray[i].dataSocket == -1) {
                 fprintf(stderr, "[THREAD] Error: trying to send message to client %d with no data socket bound.\n", i);
@@ -91,7 +92,7 @@ int handleMessageToRoom(char *buffer) {
                 fprintf(stderr, "[THREAD] Error when writing message to socket.\n");
                 return SERV_REPLY_FAIL;
             }
-     //   }
+        }
     }
     return SERV_REPLY_OK;
 }

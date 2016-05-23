@@ -221,14 +221,16 @@ void* connection_thread(void* args) {
 
 		// Finish building response
 		response->response = serverResponse;
-		int confirm = write(messageSocket, response, sizeof(SERVER_RESPONSE));
-		free(response);
-		if ((confirm < 0) && (disconnectClient==1)) {
-			fprintf(stderr, "[THREAD] ERROR sending reply to client");
-			close(messageSocket);
-		}
-		else {
-			printf("[THREAD] Sent reply to client. Confirm = %d\n", confirm);
+		if (!disconnectClient) {
+			int confirm = write(messageSocket, response, sizeof(SERVER_RESPONSE));
+			free(response);
+			if (confirm < 0) {
+				fprintf(stderr, "[THREAD] ERROR sending reply to client");
+				break;
+			}
+			else {
+				printf("[THREAD] Sent reply to client. Confirm = %d\n", confirm);
+			}
 		}
 
 		if (servListRooms) {

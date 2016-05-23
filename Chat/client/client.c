@@ -199,12 +199,13 @@ void doUserAction(char *buffer) {
 				message->tag = MESSAGE_TO_ROOM;
 				message->size = strlen(buffer) + sizeof(int) + sizeof(int);
 				message->roomId = selectedRoom;
+				strcpy(message->senderNick, nick);
 				strcpy(message->messageText, buffer);
 
 				// envia para o socket de dados
 				int confirm = write(s, message, sizeof(MESSAGE));
 				free(message);
-				if (confirm < 0){
+				if ((confirm < 0) || !(readServerResponse(CHECK_RESPONSE))){
 					printf("Transmission error\n");
 					close(s);
 					return;
@@ -370,6 +371,7 @@ void createRoom(char *buffer){
 		printf("Server returned error, please try again later.\n");
 	}
 	create_room_action=0;
+	requestRoomList();
 }
 
 void requestRoomList(){
@@ -421,17 +423,14 @@ void leaveRoom(){
 			close(s);
 			return;
 		}
-
-		char msg_out[strlen(nick) + strlen(" saiu do chat")];
-		strcat(msg_out, nick);
-		strcat(msg_out, " saiu do chat");
+		int response1 = readServerResponse(CHECK_RESPONSE);
 
 		MESSAGE *message = malloc(sizeof(MESSAGE));
 		message->clientId = ID;
 		message->tag = MESSAGE_TO_ROOM;
-		message->size = strlen(msg_out) + sizeof(int) + sizeof(int);
 		message->roomId = selectedRoom;
-		strcpy(message->messageText, msg_out);
+		strcpy(message->senderNick, nick);
+		sprintf(message->messageText, "%s saiu do chat.", nick);
 
 		// envia para o socket de dados
 		int confirm = write(s, message, sizeof(MESSAGE));
@@ -442,12 +441,14 @@ void leaveRoom(){
 			return;
 		}
 
-		if(readServerResponse(CHECK_RESPONSE)){
+		int response2 = readServerResponse(CHECK_RESPONSE);
+		if(response1 && response2){
 			printf("You left the room successfully.\n");
-
+			selectedRoom = -1;
 		}
 
 		enableToWrite = 0;
+		requestRoomList();
 	}
 }
 

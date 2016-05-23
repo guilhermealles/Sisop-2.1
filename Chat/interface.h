@@ -49,8 +49,6 @@ typedef struct message {
     char            senderNick[MAX_NICK_LENGTH];
     unsigned int    roomId;
     char            messageText[MAX_MESSAGE_LENGTH];
-	char 			nick[MAX_NICK_LENGTH];
-
 } MESSAGE;
 
 typedef struct nickMessage {

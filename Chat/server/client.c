@@ -110,6 +110,7 @@ int leaveRoom(int clientId) {
         return -1;
     }
     clientsArray[clientId].chatRoom = -1;
+	printf("[THREAD] Room of client ID %d - %s changed to %d.\n", clientId, clientsArray[clientId].nick, clientsArray[clientId].chatRoom);
 
     pthread_mutex_unlock(&clientsMutex);
     return clientId;
